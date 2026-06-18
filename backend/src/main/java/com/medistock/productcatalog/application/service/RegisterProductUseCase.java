@@ -46,7 +46,7 @@ public class RegisterProductUseCase {
         return toDTO(saved);
     }
 
-    static ProductDTO toDTO(Product product) {
+    public static ProductDTO toDTO(Product product) {
         return ProductDTO.builder()
                 .id(product.getProductId())
                 .tenantId(product.getTenantId())
@@ -63,6 +63,8 @@ public class RegisterProductUseCase {
                 .salePrice(product.getSalePrice().amount())
                 .purchasePrice(product.getPurchasePrice().amount())
                 .isActive(product.isActive())
+                .createdAt(product.getCreatedAt())
+                .updatedAt(product.getUpdatedAt())
                 .build();
     }
 }

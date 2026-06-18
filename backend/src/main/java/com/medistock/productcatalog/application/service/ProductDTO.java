@@ -1,6 +1,7 @@
 package com.medistock.productcatalog.application.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
@@ -22,7 +23,9 @@ public record ProductDTO(
         String unit,
         BigDecimal salePrice,
         BigDecimal purchasePrice,
-        boolean isActive
+        boolean isActive,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt
 ) {
 
     public static ProductDTOBuilder builder() {
@@ -45,6 +48,8 @@ public record ProductDTO(
         private BigDecimal salePrice;
         private BigDecimal purchasePrice;
         private boolean isActive;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
 
         ProductDTOBuilder() {}
 
@@ -63,11 +68,14 @@ public record ProductDTO(
         public ProductDTOBuilder salePrice(BigDecimal salePrice) { this.salePrice = salePrice; return this; }
         public ProductDTOBuilder purchasePrice(BigDecimal purchasePrice) { this.purchasePrice = purchasePrice; return this; }
         public ProductDTOBuilder isActive(boolean isActive) { this.isActive = isActive; return this; }
+        public ProductDTOBuilder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
+        public ProductDTOBuilder updatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
 
         public ProductDTO build() {
             return new ProductDTO(id, tenantId, name, genericName, categoryId,
                     concentration, dosageForm, manufacturer, requiresPrescription,
-                    isControlled, storageCondition, unit, salePrice, purchasePrice, isActive);
+                    isControlled, storageCondition, unit, salePrice, purchasePrice,
+                    isActive, createdAt, updatedAt);
         }
     }
 }
