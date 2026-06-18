@@ -1,10 +1,10 @@
 // ─── Product ────────────────────────────────────────────────────────────────
 
 export interface Product {
-  id: number;
+  id: string;
   name: string;
   genericName: string;
-  categoryId: number;
+  categoryId: string;
   concentration: string;
   dosageForm: string;
   manufacturer: string;
@@ -15,6 +15,14 @@ export interface Product {
   salePrice: number;
   purchasePrice: number;
   isActive: boolean;
+}
+
+// ─── Category ───────────────────────────────────────────────────────────────
+
+export interface Category {
+  id: string;
+  name: string;
+  description?: string;
 }
 
 // ─── Batch ──────────────────────────────────────────────────────────────────
