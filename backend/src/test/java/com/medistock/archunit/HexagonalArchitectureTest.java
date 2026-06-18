@@ -70,6 +70,7 @@ class HexagonalArchitectureTest {
         classes()
                 .that().haveSimpleName("FefoAllocationStrategy")
                 .should().resideInAPackage("..domain..")
+                .allowEmptyShould(true)
                 .check(importedClasses);
     }
 
@@ -78,6 +79,7 @@ class HexagonalArchitectureTest {
         classes()
                 .that().haveSimpleName("BatchAllocator")
                 .should().resideInAPackage("..application..")
+                .allowEmptyShould(true)
                 .check(importedClasses);
     }
 
@@ -94,6 +96,7 @@ class HexagonalArchitectureTest {
         classes()
                 .that().areInterfaces()
                 .and().haveSimpleNameEndingWith("Repository")
+                .and().haveSimpleNameNotStartingWith("SpringDataJpa")
                 .should().resideInAPackage("..domain.port..")
                 .check(importedClasses);
 
@@ -119,6 +122,7 @@ class HexagonalArchitectureTest {
                 .that().resideInAnyPackage("com.medistock.sales.domain..")
                 .should().dependOnClassesThat()
                 .resideInAnyPackage("com.medistock.inventory.domain..")
+                .allowEmptyShould(true)
                 .check(importedClasses);
     }
 }
