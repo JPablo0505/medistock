@@ -27,35 +27,58 @@ export interface Category {
 
 // ─── Batch ──────────────────────────────────────────────────────────────────
 
-export type BatchStatus = "available" | "expired" | "depleted" | "quarantined";
+export type BatchStatus = "ACTIVE" | "EXPIRED" | "QUARANTINED" | "DEPLETED" | "DISPOSED";
 
 export interface Batch {
-  id: number;
-  productId: number;
+  id: string;
+  tenantId: string;
+  productId: string;
   batchCode: string;
   initialQuantity: number;
   currentQuantity: number;
   expirationDate: string; // ISO date
-  manufacturingDate: string; // ISO date
+  manufacturingDate: string | null;
   costPerUnit: number;
   status: BatchStatus;
-  notes?: string;
+  category: string | null;
+  notes: string | null;
 }
 
 // ─── Movement ───────────────────────────────────────────────────────────────
 
-export type MovementType = "in" | "out" | "adjustment" | "transfer";
+export type MovementType = "RECEIPT" | "ADJUSTMENT" | "WRITE_OFF" | "TRANSFER" | "ALLOCATED" | "QUARANTINE_IN" | "QUARANTINE_OUT";
 
 export interface Movement {
-  id: number;
-  batchId: number;
-  productId: number;
+  id: string;
+  batchId: string;
+  productId: string;
   type: MovementType;
   quantity: number;
-  referenceId?: string;
-  reason?: string;
-  unitCost?: number;
+  previousQuantity: number;
+  newQuantity: number;
+  reason: string | null;
+  performedBy: string | null;
   createdAt: string; // ISO datetime
+}
+
+// ─── Batch Detail ───────────────────────────────────────────────────────────
+
+export interface BatchDetail {
+  batch: Batch;
+  movements: Movement[];
+}
+
+// ─── Stock Projection ───────────────────────────────────────────────────────
+
+export interface StockProjection {
+  productId: string;
+  totalQuantity: number;
+  availableQuantity: number;
+  quarantinedQuantity: number;
+  expiredQuantity: number;
+  disposedQuantity: number;
+  totalBatches: number;
+  nearestExpiryDate: string | null;
 }
 
 // ─── Sale ───────────────────────────────────────────────────────────────────

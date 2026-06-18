@@ -14,7 +14,7 @@ import {
 const navItems = [
   { label: "Inicio", href: "/", icon: LayoutDashboard },
   { label: "Productos", href: "/products", icon: Package },
-  { label: "Inventario", href: "/inventario", icon: ClipboardList },
+  { label: "Inventario", href: "/batches", icon: ClipboardList },
   { label: "Ventas", href: "/ventas", icon: ShoppingCart },
   { label: "Alertas", href: "/alertas", icon: AlertTriangle },
 ];
