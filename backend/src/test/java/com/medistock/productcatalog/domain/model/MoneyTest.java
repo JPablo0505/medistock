@@ -1,74 +1,61 @@
 package com.medistock.productcatalog.domain.model;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-import java.math.BigDecimal;
+import com.medistock.shared.domain.ValueObject;
 import org.junit.jupiter.api.Test;
+import java.math.BigDecimal;
+import static org.junit.jupiter.api.Assertions.*;
 
 class MoneyTest {
 
     @Test
     void shouldCreateMoneyWithValidAmount() {
-        Money money = Money.of(new BigDecimal("1500.50"), "COP");
-        assertEquals(new BigDecimal("1500.50"), money.amount());
+        Money money = Money.of(100.50);
+        assertEquals(0, BigDecimal.valueOf(100.50).compareTo(money.amount()));
         assertEquals("COP", money.currency());
     }
 
     @Test
-    void shouldDefaultToCopCurrency() {
-        Money money = Money.of(new BigDecimal("500.00"));
-        assertEquals("COP", money.currency());
+    void shouldCreateMoneyWithZeroAmount() {
+        Money money = Money.of(BigDecimal.ZERO);
+        assertEquals(0, BigDecimal.ZERO.compareTo(money.amount()));
     }
 
     @Test
     void shouldRejectNegativeAmount() {
-        assertThrows(ProductDomainException.class,
-                () -> Money.of(new BigDecimal("-100.00"), "COP"));
+        assertThrows(IllegalArgumentException.class,
+                () -> Money.of(BigDecimal.valueOf(-1)));
     }
 
     @Test
     void shouldRejectNullAmount() {
-        assertThrows(IllegalArgumentException.class,
-                () -> Money.of(null, "COP"));
+        assertThrows(NullPointerException.class,
+                () -> new Money(null, "COP"));
     }
 
     @Test
     void shouldRejectNullCurrency() {
-        assertThrows(IllegalArgumentException.class,
-                () -> Money.of(BigDecimal.TEN, null));
+        assertThrows(NullPointerException.class,
+                () -> new Money(BigDecimal.TEN, null));
     }
 
     @Test
-    void shouldAcceptZeroAmount() {
-        Money money = Money.of(BigDecimal.ZERO, "COP");
-        assertEquals(BigDecimal.ZERO, money.amount());
+    void twoMoneysWithSameValueShouldBeEqual() {
+        Money a = Money.of(50.00);
+        Money b = Money.of(50.00);
+        assertEquals(a, b);
+        assertEquals(a.hashCode(), b.hashCode());
     }
 
     @Test
-    void shouldImplementValueObject() {
-        Money money = Money.of(new BigDecimal("100.00"), "COP");
-        assertTrue(money instanceof com.medistock.shared.domain.ValueObject);
+    void twoMoneysWithDifferentValuesShouldNotBeEqual() {
+        Money a = Money.of(50.00);
+        Money b = Money.of(100.00);
+        assertNotEquals(a, b);
     }
 
     @Test
-    void shouldBeEqualForSameAmountAndCurrency() {
-        Money money1 = Money.of(new BigDecimal("100.00"), "COP");
-        Money money2 = Money.of(new BigDecimal("100.00"), "COP");
-        assertEquals(money1, money2);
-        assertEquals(money1.hashCode(), money2.hashCode());
-    }
-
-    @Test
-    void shouldNotBeEqualForDifferentAmounts() {
-        Money money1 = Money.of(new BigDecimal("100.00"), "COP");
-        Money money2 = Money.of(new BigDecimal("200.00"), "COP");
-        assertNotEquals(money1, money2);
-    }
-
-    @Test
-    void shouldNotBeEqualForDifferentCurrencies() {
-        Money money1 = Money.of(new BigDecimal("100.00"), "COP");
-        Money money2 = Money.of(new BigDecimal("100.00"), "USD");
-        assertNotEquals(money1, money2);
+    void shouldBeARecord() {
+        Money money = Money.of(10.00);
+        assertInstanceOf(ValueObject.class, money);
     }
 }

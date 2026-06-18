@@ -3,16 +3,16 @@ package com.medistock.productcatalog.infrastructure.persistence;
 import com.medistock.productcatalog.domain.model.Money;
 import com.medistock.productcatalog.domain.model.Product;
 import com.medistock.productcatalog.domain.port.ProductRepository;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Adapter implementation of ProductRepository.
- * Maps between JPA entities and domain entities manually (DSG-03).
+ * JPA adapter for ProductRepository.
+ * Manual mapping between domain Product and JpaProduct (DSG-03).
  */
-@Component
+@Repository
 public class JpaProductRepository implements ProductRepository {
 
     private final SpringDataJpaProductRepository springRepo;
@@ -28,7 +28,14 @@ public class JpaProductRepository implements ProductRepository {
 
     @Override
     public List<Product> findByTenantId(String tenantId) {
-        return springRepo.findByTenantId(tenantId).stream()
+        return springRepo.findByTenantIdOrderByName(tenantId).stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Product> findByTenantIdAndIsActive(String tenantId, boolean isActive) {
+        return springRepo.findByTenantIdAndIsActiveOrderByName(tenantId, isActive).stream()
                 .map(this::toDomain)
                 .toList();
     }
@@ -42,16 +49,14 @@ public class JpaProductRepository implements ProductRepository {
 
     @Override
     public void delete(Product product) {
-        springRepo.findById(product.getProductId())
-                .ifPresent(springRepo::delete);
+        springRepo.deleteById(product.getId());
     }
 
-    // --- Mapping ---
-
     private Product toDomain(JpaProduct jpa) {
-        return Product.reconstitute(
-                jpa.getId(),
-                jpa.getTenantId(),
+        Product product = Product.register(jpa.getTenantId(), jpa.getName(), jpa.getUnit());
+        // Use reflection-like field update since Product uses a private constructor
+        // Instead, we update via the public update() method
+        product.update(
                 jpa.getName(),
                 jpa.getGenericName(),
                 jpa.getCategoryId(),
@@ -62,32 +67,32 @@ public class JpaProductRepository implements ProductRepository {
                 jpa.isControlled(),
                 jpa.getStorageCondition(),
                 jpa.getUnit(),
-                Money.of(jpa.getSalePrice()),
-                Money.of(jpa.getPurchasePrice()),
-                jpa.isActive(),
-                jpa.getCreatedAt(),
-                jpa.getUpdatedAt()
+                jpa.getSalePrice(),
+                jpa.getPurchasePrice()
         );
+        if (!jpa.isActive()) {
+            try { product.deactivate(); } catch (Exception e) { /* already inactive */ }
+        }
+        return product;
     }
 
-    private JpaProduct toJpa(Product domain) {
-        JpaProduct jpa = new JpaProduct(
-                domain.getName(),
-                domain.getGenericName(),
-                domain.getCategoryId(),
-                domain.getConcentration(),
-                domain.getDosageForm(),
-                domain.getManufacturer(),
-                domain.isRequiresPrescription(),
-                domain.isControlled(),
-                domain.getStorageCondition(),
-                domain.getUnit(),
-                domain.getSalePrice().amount(),
-                domain.getPurchasePrice().amount(),
-                domain.isActive()
-        );
-        jpa.setId(domain.getProductId());
-        jpa.setTenantId(domain.getTenantId());
+    private JpaProduct toJpa(Product product) {
+        JpaProduct jpa = new JpaProduct();
+        jpa.setId(product.getId());
+        jpa.setTenantId(product.getTenantId());
+        jpa.setName(product.getName());
+        jpa.setGenericName(product.getGenericName());
+        jpa.setCategoryId(product.getCategoryId());
+        jpa.setConcentration(product.getConcentration());
+        jpa.setDosageForm(product.getDosageForm());
+        jpa.setManufacturer(product.getManufacturer());
+        jpa.setRequiresPrescription(product.isRequiresPrescription());
+        jpa.setControlled(product.isControlled());
+        jpa.setStorageCondition(product.getStorageCondition());
+        jpa.setUnit(product.getUnit());
+        jpa.setSalePrice(product.getSalePrice() != null ? product.getSalePrice().amount() : java.math.BigDecimal.ZERO);
+        jpa.setPurchasePrice(product.getPurchasePrice() != null ? product.getPurchasePrice().amount() : java.math.BigDecimal.ZERO);
+        jpa.setActive(product.isActive());
         return jpa;
     }
 }

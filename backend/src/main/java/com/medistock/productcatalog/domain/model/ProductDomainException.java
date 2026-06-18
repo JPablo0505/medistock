@@ -3,11 +3,13 @@ package com.medistock.productcatalog.domain.model;
 import com.medistock.shared.domain.DomainException;
 
 /**
- * Thrown when product/category domain invariants are violated.
+ * Thrown when a product domain rule is violated.
  */
 public class ProductDomainException extends DomainException {
 
-    public ProductDomainException(String errorCode, String message) {
-        super(errorCode, message);
+    private static final String ERROR_CODE = "PRODUCT_DOMAIN_ERROR";
+
+    public ProductDomainException(String message) {
+        super(ERROR_CODE, message);
     }
 }

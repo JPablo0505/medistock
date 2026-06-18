@@ -1,6 +1,5 @@
 package com.medistock.productcatalog.application.service;
 
-import com.medistock.productcatalog.domain.model.Money;
 import com.medistock.productcatalog.domain.model.Product;
 import com.medistock.productcatalog.domain.model.ProductNotFoundException;
 import com.medistock.productcatalog.domain.port.ProductRepository;
@@ -9,12 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-/**
- * Use case: Update an existing product.
- * Loads product, applies updates, saves.
- */
 @Service
-@Transactional
 public class UpdateProductUseCase {
 
     private final ProductRepository productRepository;
@@ -23,27 +17,32 @@ public class UpdateProductUseCase {
         this.productRepository = productRepository;
     }
 
-    /**
-     * Updates an existing product.
-     *
-     * @return the updated product as a DTO
-     * @throws ProductNotFoundException if product not found
-     */
-    public ProductDTO execute(UUID productId, String name, String genericName,
-                              UUID categoryId, String concentration, String dosageForm,
-                              String manufacturer, boolean requiresPrescription,
-                              boolean isControlled, String storageCondition, String unit,
+    @Transactional
+    public ProductDTO execute(UUID id, String name, String genericName, UUID categoryId,
+                              String concentration, String dosageForm, String manufacturer,
+                              boolean requiresPrescription, boolean isControlled,
+                              String storageCondition, String unit,
                               BigDecimal salePrice, BigDecimal purchasePrice) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException(id));
 
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ProductNotFoundException(productId));
-
-        product.update(name, genericName, categoryId,
-                concentration, dosageForm, manufacturer,
-                requiresPrescription, isControlled, storageCondition, unit,
-                Money.of(salePrice), Money.of(purchasePrice));
+        product.update(name, genericName, categoryId, concentration, dosageForm,
+                manufacturer, requiresPrescription, isControlled, storageCondition,
+                unit, salePrice, purchasePrice);
 
         Product saved = productRepository.save(product);
-        return RegisterProductUseCase.toDTO(saved);
+        return toDTO(saved);
+    }
+
+    private ProductDTO toDTO(Product p) {
+        return new ProductDTO(
+                p.getId(), p.getTenantId(), p.getName(), p.getGenericName(),
+                p.getCategoryId(), p.getConcentration(), p.getDosageForm(),
+                p.getManufacturer(), p.isRequiresPrescription(), p.isControlled(),
+                p.getStorageCondition(), p.getUnit(),
+                p.getSalePrice() != null ? p.getSalePrice().amount() : null,
+                p.getPurchasePrice() != null ? p.getPurchasePrice().amount() : null,
+                p.isActive()
+        );
     }
 }

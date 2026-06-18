@@ -7,12 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
-/**
- * Use case: Reactivate a deactivated product.
- * Loads product, calls reactivate(), saves.
- */
 @Service
-@Transactional
 public class ReactivateProductUseCase {
 
     private final ProductRepository productRepository;
@@ -21,19 +16,24 @@ public class ReactivateProductUseCase {
         this.productRepository = productRepository;
     }
 
-    /**
-     * Reactivates a product by its ID.
-     * Idempotent — reactivating an already active product does nothing.
-     *
-     * @return the reactivated product as a DTO
-     * @throws ProductNotFoundException if product not found
-     */
-    public ProductDTO execute(UUID productId) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ProductNotFoundException(productId));
-
+    @Transactional
+    public ProductDTO execute(UUID id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException(id));
         product.reactivate();
         Product saved = productRepository.save(product);
-        return RegisterProductUseCase.toDTO(saved);
+        return toDTO(saved);
+    }
+
+    private ProductDTO toDTO(Product p) {
+        return new ProductDTO(
+                p.getId(), p.getTenantId(), p.getName(), p.getGenericName(),
+                p.getCategoryId(), p.getConcentration(), p.getDosageForm(),
+                p.getManufacturer(), p.isRequiresPrescription(), p.isControlled(),
+                p.getStorageCondition(), p.getUnit(),
+                p.getSalePrice() != null ? p.getSalePrice().amount() : null,
+                p.getPurchasePrice() != null ? p.getPurchasePrice().amount() : null,
+                p.isActive()
+        );
     }
 }

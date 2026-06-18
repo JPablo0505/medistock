@@ -1,135 +1,119 @@
 package com.medistock.productcatalog.infrastructure.rest;
 
 import com.medistock.crosscutting.security.TenantContext;
-import com.medistock.productcatalog.application.service.DeactivateProductUseCase;
-import com.medistock.productcatalog.application.service.ProductDTO;
-import com.medistock.productcatalog.application.service.ReactivateProductUseCase;
-import com.medistock.productcatalog.application.service.RegisterProductUseCase;
-import com.medistock.productcatalog.application.service.UpdateProductUseCase;
-import com.medistock.productcatalog.domain.model.Product;
-import com.medistock.productcatalog.domain.model.ProductDomainException;
+import com.medistock.productcatalog.application.service.*;
 import com.medistock.productcatalog.domain.model.ProductNotFoundException;
 import com.medistock.productcatalog.domain.port.ProductRepository;
 import jakarta.validation.Valid;
-import java.net.URI;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 import java.util.UUID;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
-/**
- * REST controller for Product CRUD operations.
- */
 @RestController
 @RequestMapping("/api/v1/products")
 public class ProductController {
 
-    private final RegisterProductUseCase registerProductUseCase;
-    private final UpdateProductUseCase updateProductUseCase;
-    private final DeactivateProductUseCase deactivateProductUseCase;
-    private final ReactivateProductUseCase reactivateProductUseCase;
+    private final RegisterProductUseCase registerUseCase;
+    private final UpdateProductUseCase updateUseCase;
+    private final DeactivateProductUseCase deactivateUseCase;
+    private final ReactivateProductUseCase reactivateUseCase;
     private final ProductRepository productRepository;
 
-    public ProductController(RegisterProductUseCase registerProductUseCase,
-                             UpdateProductUseCase updateProductUseCase,
-                             DeactivateProductUseCase deactivateProductUseCase,
-                             ReactivateProductUseCase reactivateProductUseCase,
+    public ProductController(RegisterProductUseCase registerUseCase,
+                             UpdateProductUseCase updateUseCase,
+                             DeactivateProductUseCase deactivateUseCase,
+                             ReactivateProductUseCase reactivateUseCase,
                              ProductRepository productRepository) {
-        this.registerProductUseCase = registerProductUseCase;
-        this.updateProductUseCase = updateProductUseCase;
-        this.deactivateProductUseCase = deactivateProductUseCase;
-        this.reactivateProductUseCase = reactivateProductUseCase;
+        this.registerUseCase = registerUseCase;
+        this.updateUseCase = updateUseCase;
+        this.deactivateUseCase = deactivateUseCase;
+        this.reactivateUseCase = reactivateUseCase;
         this.productRepository = productRepository;
     }
 
     @PostMapping
-    public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody CreateProductRequest request) {
+    public ResponseEntity<ProductDTO> create(@Valid @RequestBody CreateProductRequest request) {
         String tenantId = TenantContext.getTenantId();
-        if (tenantId == null || tenantId.isBlank()) {
-            throw new ProductDomainException(
-                    "TENANT_REQUIRED", "Tenant ID is required");
-        }
-
-        ProductDTO dto = registerProductUseCase.execute(
-                tenantId,
-                request.name(),
-                request.genericName(),
-                request.categoryId(),
-                request.concentration(),
-                request.dosageForm(),
-                request.manufacturer(),
-                request.requiresPrescription(),
-                request.isControlled(),
-                request.storageCondition(),
-                request.unit(),
-                request.salePrice(),
-                request.purchasePrice()
-        );
-
-        URI location = URI.create("/api/v1/products/" + dto.id());
-        return ResponseEntity.created(location).body(ProductResponse.fromDTO(dto));
+        ProductDTO result = registerUseCase.execute(tenantId, request.name(), request.unit());
+        // Apply full update with all fields after registration
+        ProductDTO updated = updateUseCase.execute(
+                result.id(), request.name(), request.genericName(),
+                request.categoryId(), request.concentration(), request.dosageForm(),
+                request.manufacturer(), request.requiresPrescription(),
+                request.isControlled(), request.storageCondition(),
+                request.unit(), request.salePrice(), request.purchasePrice());
+        return ResponseEntity.status(HttpStatus.CREATED).body(updated);
     }
 
     @GetMapping
-    public ResponseEntity<List<ProductResponse>> listProducts() {
+    public ResponseEntity<List<ProductDTO>> list(@RequestParam(required = false) Boolean active) {
         String tenantId = TenantContext.getTenantId();
-        if (tenantId == null || tenantId.isBlank()) {
-            return ResponseEntity.ok(List.of());
+        List<ProductDTO> products;
+        if (active != null) {
+            products = productRepository.findByTenantIdAndIsActive(tenantId, active).stream()
+                    .map(p -> new ProductDTO(
+                            p.getId(), p.getTenantId(), p.getName(), p.getGenericName(),
+                            p.getCategoryId(), p.getConcentration(), p.getDosageForm(),
+                            p.getManufacturer(), p.isRequiresPrescription(), p.isControlled(),
+                            p.getStorageCondition(), p.getUnit(),
+                            p.getSalePrice() != null ? p.getSalePrice().amount() : null,
+                            p.getPurchasePrice() != null ? p.getPurchasePrice().amount() : null,
+                            p.isActive()))
+                    .toList();
+        } else {
+            products = productRepository.findByTenantId(tenantId).stream()
+                    .map(p -> new ProductDTO(
+                            p.getId(), p.getTenantId(), p.getName(), p.getGenericName(),
+                            p.getCategoryId(), p.getConcentration(), p.getDosageForm(),
+                            p.getManufacturer(), p.isRequiresPrescription(), p.isControlled(),
+                            p.getStorageCondition(), p.getUnit(),
+                            p.getSalePrice() != null ? p.getSalePrice().amount() : null,
+                            p.getPurchasePrice() != null ? p.getPurchasePrice().amount() : null,
+                            p.isActive()))
+                    .toList();
         }
-
-        List<Product> products = productRepository.findByTenantId(tenantId);
-        List<ProductResponse> responses = products.stream()
-                .map(p -> ProductResponse.fromDTO(RegisterProductUseCase.toDTO(p)))
-                .toList();
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(products);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProductResponse> getProduct(@PathVariable UUID id) {
-        Product product = productRepository.findById(id)
+    public ResponseEntity<ProductDTO> getById(@PathVariable UUID id) {
+        var product = productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
-        return ResponseEntity.ok(
-                ProductResponse.fromDTO(RegisterProductUseCase.toDTO(product)));
+        ProductDTO dto = new ProductDTO(
+                product.getId(), product.getTenantId(), product.getName(), product.getGenericName(),
+                product.getCategoryId(), product.getConcentration(), product.getDosageForm(),
+                product.getManufacturer(), product.isRequiresPrescription(), product.isControlled(),
+                product.getStorageCondition(), product.getUnit(),
+                product.getSalePrice() != null ? product.getSalePrice().amount() : null,
+                product.getPurchasePrice() != null ? product.getPurchasePrice().amount() : null,
+                product.isActive());
+        return ResponseEntity.ok(dto);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProductResponse> updateProduct(@PathVariable UUID id,
-                                                         @Valid @RequestBody UpdateProductRequest request) {
-        ProductDTO dto = updateProductUseCase.execute(
-                id,
-                request.name(),
-                request.genericName(),
-                request.categoryId(),
-                request.concentration(),
-                request.dosageForm(),
-                request.manufacturer(),
-                request.requiresPrescription(),
-                request.isControlled(),
-                request.storageCondition(),
-                request.unit(),
-                request.salePrice(),
-                request.purchasePrice()
-        );
-        return ResponseEntity.ok(ProductResponse.fromDTO(dto));
+    public ResponseEntity<ProductDTO> update(@PathVariable UUID id,
+                                             @Valid @RequestBody UpdateProductRequest request) {
+        ProductDTO result = updateUseCase.execute(
+                id, request.name(), request.genericName(),
+                request.categoryId(), request.concentration(), request.dosageForm(),
+                request.manufacturer(), request.requiresPrescription(),
+                request.isControlled(), request.storageCondition(),
+                request.unit(), request.salePrice(), request.purchasePrice());
+        return ResponseEntity.ok(result);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ProductResponse> deactivateProduct(@PathVariable UUID id) {
-        ProductDTO dto = deactivateProductUseCase.execute(id);
-        return ResponseEntity.ok(ProductResponse.fromDTO(dto));
+    public ResponseEntity<Void> deactivate(@PathVariable UUID id) {
+        deactivateUseCase.execute(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/reactivate")
-    public ResponseEntity<ProductResponse> reactivateProduct(@PathVariable UUID id) {
-        ProductDTO dto = reactivateProductUseCase.execute(id);
-        return ResponseEntity.ok(ProductResponse.fromDTO(dto));
+    public ResponseEntity<ProductDTO> reactivate(@PathVariable UUID id) {
+        ProductDTO result = reactivateUseCase.execute(id);
+        return ResponseEntity.ok(result);
     }
 }

@@ -2,16 +2,16 @@ package com.medistock.productcatalog.infrastructure.persistence;
 
 import com.medistock.productcatalog.domain.model.Category;
 import com.medistock.productcatalog.domain.port.CategoryRepository;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Adapter implementation of CategoryRepository.
- * Maps between JPA entities and domain entities manually (DSG-03).
+ * JPA adapter for CategoryRepository.
+ * Manual mapping between domain Category and JpaCategory (DSG-03).
  */
-@Component
+@Repository
 public class JpaCategoryRepository implements CategoryRepository {
 
     private final SpringDataJpaCategoryRepository springRepo;
@@ -27,7 +27,7 @@ public class JpaCategoryRepository implements CategoryRepository {
 
     @Override
     public List<Category> findByTenantId(String tenantId) {
-        return springRepo.findByTenantId(tenantId).stream()
+        return springRepo.findByTenantIdOrderByName(tenantId).stream()
                 .map(this::toDomain)
                 .toList();
     }
@@ -39,24 +39,16 @@ public class JpaCategoryRepository implements CategoryRepository {
         return toDomain(saved);
     }
 
-    // --- Mapping ---
-
     private Category toDomain(JpaCategory jpa) {
-        return Category.reconstitute(
-                jpa.getId(),
-                jpa.getTenantId(),
-                jpa.getName(),
-                jpa.getDescription()
-        );
+        return new Category(jpa.getId(), jpa.getTenantId(), jpa.getName(), jpa.getDescription());
     }
 
-    private JpaCategory toJpa(Category domain) {
-        JpaCategory jpa = new JpaCategory(
-                domain.getName(),
-                domain.getDescription()
-        );
-        jpa.setId(domain.getCategoryId());
-        jpa.setTenantId(domain.getTenantId());
+    private JpaCategory toJpa(Category category) {
+        JpaCategory jpa = new JpaCategory();
+        jpa.setId(category.getId());
+        jpa.setTenantId(category.getTenantId());
+        jpa.setName(category.getName());
+        jpa.setDescription(category.getDescription());
         return jpa;
     }
 }
