@@ -1,0 +1,72 @@
+plugins {
+    alias(libs.plugins.spring.boot)
+    alias(libs.plugins.spring.dependency.management)
+    id 'java'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Spring Boot starters
+    implementation libs.spring.boot.starter.web
+    implementation libs.spring.boot.starter.data.jpa
+    implementation libs.spring.boot.starter.validation
+    implementation libs.spring.boot.starter.actuator
+    implementation libs.spring.boot.starter.security
+
+    // Flyway
+    implementation libs.flyway.core
+    implementation libs.flyway.database.postgresql
+
+    // Spring Retry
+    implementation libs.spring.retry
+
+    // Jackson
+    implementation libs.jackson.databind
+    implementation libs.jackson.jsr310
+
+    // JWT
+    implementation libs.java.jwt
+
+    // SpringDoc OpenAPI
+    implementation libs.springdoc.openapi.starter.webmvc.ui
+
+    // Lombok
+    compileOnly libs.lombok
+    annotationProcessor libs.lombok
+
+    // Database
+    runtimeOnly libs.postgresql
+    runtimeOnly libs.h2
+
+    // Test
+    testImplementation libs.spring.boot.starter.test
+    testImplementation libs.junit.jupiter
+    testImplementation libs.mockito.core
+    testImplementation libs.mockito.junit.jupiter
+    testImplementation libs.testcontainers.postgresql
+    testImplementation libs.testcontainers.junit.jupiter
+    testImplementation libs.archunit.junit5
+}
+
+tasks.named('test', Test) {
+    useJUnitPlatform()
+    testLogging {
+        events = ['passed', 'failed', 'skipped']
+        showStandardStreams = true
+    }
+}
