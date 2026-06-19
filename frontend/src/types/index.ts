@@ -143,32 +143,35 @@ export interface CreateSaleRequest {
 
 // ─── Alert ──────────────────────────────────────────────────────────────────
 
-export type AlertSeverity = "low" | "medium" | "high" | "critical";
+export type AlertSeverity = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 export type AlertRuleType =
-  | "expiration"
-  | "low_stock"
-  | "controlled_stock"
-  | "prescription";
+  | "EXPIRATION"
+  | "LOW_STOCK"
+  | "CONTROLLED_STOCK"
+  | "PRESCRIPTION";
 
 export interface AlertRule {
-  id: number;
+  id: string;
   name: string;
+  description?: string;
   type: AlertRuleType;
   config: Record<string, unknown>;
-  isActive: boolean;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export type AlertInstanceStatus = "active" | "acknowledged" | "resolved";
+export type AlertInstanceStatus = "ACTIVE" | "ACKNOWLEDGED" | "RESOLVED";
 
 export interface AlertInstance {
-  id: number;
-  alertRuleId: number;
-  productId: number;
-  batchId?: number;
+  id: string;
+  alertRuleId: string;
+  productId: string;
+  batchId?: string;
   severity: AlertSeverity;
   message: string;
   status: AlertInstanceStatus;
-  createdAt: string; // ISO datetime
+  createdAt: string;
   acknowledgedAt?: string;
   resolvedAt?: string;
 }
