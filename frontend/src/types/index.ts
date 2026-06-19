@@ -83,25 +83,62 @@ export interface StockProjection {
 
 // ─── Sale ───────────────────────────────────────────────────────────────────
 
-export type SaleStatus = "completed" | "cancelled" | "refunded";
+export type SaleStatus = "COMPLETED" | "VOIDED";
 
-export interface Sale {
-  id: number;
-  saleNumber: string;
-  customerName?: string;
-  totalAmount: number;
-  status: SaleStatus;
-  createdAt: string; // ISO datetime
+export interface BatchAllocation {
+  batchId: string;
+  lotNumber: string;
+  expirationDate: string;
+  allocatedQuantity: number;
+  costPerUnit: number;
 }
 
-export interface SaleLineItem {
-  id: number;
-  productId: number;
+export interface SaleItemResponse {
+  itemId: string;
+  productId: string;
   productName: string;
+  productSku: string;
   quantity: number;
   unitPrice: number;
-  lineTotal: number;
-  batchId: number;
+  totalPrice: number;
+  batchAllocations: BatchAllocation[];
+}
+
+export interface SaleResponse {
+  id: string;
+  saleDate: string;
+  saleType: string;
+  items: SaleItemResponse[];
+  subtotal: number;
+  total: number;
+  status: SaleStatus;
+  performedBy: string;
+  voidedAt: string | null;
+  voidReason: string | null;
+  createdAt: string;
+}
+
+export interface SaleSummary {
+  id: string;
+  saleDate: string;
+  itemCount: number;
+  total: number;
+  status: SaleStatus;
+  performedBy: string;
+  createdAt: string;
+}
+
+export interface CreateSaleItem {
+  productId: string;
+  productName?: string;
+  productSku?: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface CreateSaleRequest {
+  items: CreateSaleItem[];
+  notes?: string;
 }
 
 // ─── Alert ──────────────────────────────────────────────────────────────────
