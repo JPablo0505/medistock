@@ -170,6 +170,24 @@ public class Batch implements AggregateRoot {
     }
 
     /**
+     * Restore quantity to this batch (used for void/reversal).
+     * Increments currentQuantity by the given amount.
+     * If the batch was DEPLETED, it becomes ACTIVE again.
+     */
+    public void restoreQuantity(int quantity) {
+        if (quantity <= 0) {
+            throw new InventoryDomainException("Restore quantity must be positive");
+        }
+        if (status == BatchStatus.DISPOSED) {
+            throw new InventoryDomainException("Cannot restore quantity to a DISPOSED batch");
+        }
+        this.currentQuantity += quantity;
+        if (status == BatchStatus.DEPLETED && currentQuantity > 0) {
+            this.status = BatchStatus.ACTIVE;
+        }
+    }
+
+    /**
      * Adjust available stock level.
      */
     public void adjustQuantity(int newQuantity, String reason) {
