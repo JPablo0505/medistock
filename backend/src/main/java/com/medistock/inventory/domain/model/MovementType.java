@@ -10,5 +10,7 @@ public enum MovementType {
     TRANSFER,
     ALLOCATED,
     QUARANTINE_IN,
-    QUARANTINE_OUT
+    QUARANTINE_OUT,
+    SALE,
+    RETURN
 }

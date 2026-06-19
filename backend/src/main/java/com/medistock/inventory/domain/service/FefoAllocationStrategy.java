@@ -54,7 +54,8 @@ public final class FefoAllocationStrategy {
                     batch.getBatchCode(),
                     take,
                     batch.getCostPerUnit(),
-                    batch.getCostPerUnit().multiply(java.math.BigDecimal.valueOf(take))
+                    batch.getCostPerUnit().multiply(java.math.BigDecimal.valueOf(take)),
+                    batch.getExpirationDate()
             ));
 
             remaining -= take;
