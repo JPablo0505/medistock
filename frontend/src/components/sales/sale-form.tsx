@@ -14,6 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Trash2 } from "lucide-react";
 import type { Product, CreateSaleItem } from "@/types";
+import { formatCOP } from "@/lib/format";
 
 interface SaleFormProps {
   products: Product[];
@@ -132,7 +133,7 @@ export function SaleForm({ products, onSubmit, onCancel, isSubmitting }: SaleFor
               </div>
 
               <div className="w-24 pt-6 text-right text-sm text-muted-foreground">
-                ${(item.quantity * item.unitPrice).toFixed(2)}
+                {formatCOP(item.quantity * item.unitPrice)}
               </div>
 
               <Button
@@ -172,7 +173,7 @@ export function SaleForm({ products, onSubmit, onCancel, isSubmitting }: SaleFor
       <div className="flex items-center justify-between rounded-lg border p-4">
         <div>
           <p className="text-sm text-muted-foreground">Subtotal</p>
-          <p className="text-2xl font-bold">${subtotal.toFixed(2)}</p>
+          <p className="text-2xl font-bold">{formatCOP(subtotal)}</p>
         </div>
         <div className="flex gap-3">
           <Button type="button" variant="outline" onClick={onCancel}>

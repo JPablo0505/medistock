@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Search, RefreshCw, Package } from "lucide-react";
+import { formatCOP } from "@/lib/format";
 
 type FilterMode = "all" | "active" | "inactive";
 
@@ -250,7 +251,7 @@ export default function ProductsPage() {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Precio</span>
                   <span className="font-medium">
-                    {product.salePrice != null ? `$${Number(product.salePrice).toFixed(2)}` : "—"}
+                    {product.salePrice != null ? formatCOP(Number(product.salePrice)) : "—"}
                   </span>
                 </div>
                 {/* 6. Fecha de vencimiento */}

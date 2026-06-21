@@ -24,6 +24,7 @@ import {
   RefreshCw,
   Package,
 } from "lucide-react";
+import { formatCOP } from "@/lib/format";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -134,11 +135,11 @@ export default function ProductDetailPage() {
     },
     {
       label: "Sale Price",
-      value: `$${product.salePrice.toFixed(2)}`,
+      value: formatCOP(product.salePrice),
     },
     {
       label: "Purchase Price",
-      value: `$${product.purchasePrice.toFixed(2)}`,
+      value: formatCOP(product.purchasePrice),
     },
     {
       label: "Stock",

@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Package, AlertTriangle, RefreshCw } from "lucide-react";
+import { formatCOP } from "@/lib/format";
 import type { SaleSummary, SaleStatus } from "@/types";
 import { useSale } from "@/hooks/use-sales";
 
@@ -116,7 +117,7 @@ export function SaleList({ sales, isLoading, error, onRetry }: SaleListProps) {
               </TableCell>
               <TableCell>{new Date(sale.saleDate).toLocaleDateString()}</TableCell>
               <TableCell>{sale.itemCount}</TableCell>
-              <TableCell>${sale.total.toFixed(2)}</TableCell>
+              <TableCell>{formatCOP(sale.total)}</TableCell>
               <TableCell>
                 <Badge className={statusColors[sale.status]}>
                   {statusLabels[sale.status]}
@@ -210,8 +211,8 @@ export function SaleList({ sales, isLoading, error, onRetry }: SaleListProps) {
                             </div>
                           </TableCell>
                           <TableCell>{item.quantity}</TableCell>
-                          <TableCell>${item.unitPrice.toFixed(2)}</TableCell>
-                          <TableCell>${item.totalPrice.toFixed(2)}</TableCell>
+                          <TableCell>{formatCOP(item.unitPrice)}</TableCell>
+                          <TableCell>{formatCOP(item.totalPrice)}</TableCell>
                           <TableCell>
                             <div className="space-y-1">
                               {item.batchAllocations.map((alloc, i) => (
@@ -233,11 +234,11 @@ export function SaleList({ sales, isLoading, error, onRetry }: SaleListProps) {
                 <div className="w-64 space-y-2 rounded-lg border p-4">
                   <div className="flex justify-between text-sm">
                     <span>Subtotal</span>
-                    <span>${saleDetail.subtotal.toFixed(2)}</span>
+                    <span>{formatCOP(saleDetail.subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-lg font-bold">
                     <span>Total</span>
-                    <span>${saleDetail.total.toFixed(2)}</span>
+                    <span>{formatCOP(saleDetail.total)}</span>
                   </div>
                 </div>
               </div>

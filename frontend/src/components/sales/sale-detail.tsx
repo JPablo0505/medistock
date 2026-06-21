@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertTriangle, ArrowLeft, RefreshCw } from "lucide-react";
+import { formatCOP } from "@/lib/format";
 import Link from "next/link";
 import type { SaleResponse, SaleStatus } from "@/types";
 
@@ -128,8 +129,8 @@ export function SaleDetail({ sale, isLoading, error, onVoid, isVoiding, onRetry 
                     </div>
                   </TableCell>
                   <TableCell>{item.quantity}</TableCell>
-                  <TableCell>${item.unitPrice.toFixed(2)}</TableCell>
-                  <TableCell>${item.totalPrice.toFixed(2)}</TableCell>
+                  <TableCell>{formatCOP(item.unitPrice)}</TableCell>
+                  <TableCell>{formatCOP(item.totalPrice)}</TableCell>
                   <TableCell>
                     <div className="space-y-1">
                       {item.batchAllocations.map((alloc, i) => (
@@ -151,11 +152,11 @@ export function SaleDetail({ sale, isLoading, error, onVoid, isVoiding, onRetry 
         <div className="w-64 space-y-2 rounded-lg border p-4">
           <div className="flex justify-between text-sm">
             <span>Subtotal</span>
-            <span>${sale.subtotal.toFixed(2)}</span>
+            <span>{formatCOP(sale.subtotal)}</span>
           </div>
           <div className="flex justify-between text-lg font-bold">
             <span>Total</span>
-                    <span>${sale.total.toFixed(2)}</span>
+            <span>{formatCOP(sale.total)}</span>
           </div>
         </div>
       </div>

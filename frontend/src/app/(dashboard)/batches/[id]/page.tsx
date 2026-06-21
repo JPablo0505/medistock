@@ -17,6 +17,7 @@ import {
   ShieldAlert,
   Undo2,
 } from "lucide-react";
+import { formatCOP } from "@/lib/format";
 import {
   Dialog,
   DialogContent,
@@ -238,7 +239,7 @@ export default function BatchDetailPage({
             )}
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Costo unitario</dt>
-              <dd className="font-medium">${Number(batch.costPerUnit).toFixed(2)}</dd>
+              <dd className="font-medium">{formatCOP(Number(batch.costPerUnit))}</dd>
             </div>
             {batch.category && (
               <div className="flex justify-between">

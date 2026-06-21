@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   RefreshCw,
 } from "lucide-react";
+import { formatCOP } from "@/lib/format";
 
 const statusConfig: Record<
   string,
@@ -187,8 +188,7 @@ export default function BatchesPage() {
               <p className="text-xs text-muted-foreground">
                 Vence:{" "}
                 {new Date(batch.expirationDate).toLocaleDateString("es-AR")}
-                &nbsp;&middot;&nbsp; Costo: $
-                {Number(batch.costPerUnit).toFixed(2)}
+                &nbsp;&middot;&nbsp; Costo: {formatCOP(Number(batch.costPerUnit))}
               </p>
             </div>
             <ChevronRightIcon className="h-4 w-4 text-muted-foreground" />
