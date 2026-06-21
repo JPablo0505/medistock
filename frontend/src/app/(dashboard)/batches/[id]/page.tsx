@@ -13,6 +13,7 @@ import {
   Archive,
   Ban,
   CheckCircle2,
+  RefreshCw,
   ShieldAlert,
   Undo2,
 } from "lucide-react";
@@ -50,7 +51,7 @@ export default function BatchDetailPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
-  const { data, isLoading, error } = useBatch(id);
+  const { data, isLoading, error, refetch } = useBatch(id);
   const quarantineMutation = useQuarantineBatch();
   const releaseMutation = useReleaseFromQuarantine();
   const disposeMutation = useDisposeBatch();
@@ -74,9 +75,15 @@ export default function BatchDetailPage({
       <div className="flex flex-col items-center gap-2 py-12 text-center">
         <AlertTriangle className="h-8 w-8 text-destructive" />
         <p className="text-sm text-muted-foreground">Lote no encontrado</p>
-        <Button asChild variant="outline" size="sm">
-          <Link href="/batches">Volver a lotes</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link href="/batches">Volver a lotes</Link>
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Reintentar
+          </Button>
+        </div>
       </div>
     );
   }

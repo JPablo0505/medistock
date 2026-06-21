@@ -15,6 +15,7 @@ interface AlertInstanceListProps {
   onResolve: (id: string) => void;
   onEvaluate: () => void;
   isEvaluating: boolean;
+  onRetry?: () => void;
 }
 
 const severityColors: Record<AlertSeverity, string> = {
@@ -49,6 +50,7 @@ export function AlertInstanceList({
   onResolve,
   onEvaluate,
   isEvaluating,
+  onRetry,
 }: AlertInstanceListProps) {
   return (
     <Card>
@@ -69,8 +71,14 @@ export function AlertInstanceList({
         )}
 
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+          <div className="flex flex-col items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
             <p>Error al cargar alertas.</p>
+            {onRetry && (
+              <Button variant="outline" size="sm" onClick={onRetry}>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Reintentar
+              </Button>
+            )}
           </div>
         )}
 

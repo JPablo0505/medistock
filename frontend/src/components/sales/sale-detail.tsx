@@ -17,7 +17,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertTriangle, ArrowLeft } from "lucide-react";
+import { AlertTriangle, ArrowLeft, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import type { SaleResponse, SaleStatus } from "@/types";
 
@@ -27,6 +27,7 @@ interface SaleDetailProps {
   error: Error | null;
   onVoid?: (reason: string) => void;
   isVoiding?: boolean;
+  onRetry?: () => void;
 }
 
 const statusLabels: Record<SaleStatus, string> = {
@@ -39,7 +40,7 @@ const statusColors: Record<SaleStatus, string> = {
   VOIDED: "bg-gray-100 text-gray-800",
 };
 
-export function SaleDetail({ sale, isLoading, error, onVoid, isVoiding }: SaleDetailProps) {
+export function SaleDetail({ sale, isLoading, error, onVoid, isVoiding, onRetry }: SaleDetailProps) {
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -53,12 +54,20 @@ export function SaleDetail({ sale, isLoading, error, onVoid, isVoiding }: SaleDe
     return (
       <div className="flex flex-col items-center gap-4 py-16">
         <p className="text-lg text-muted-foreground">Venta no encontrada</p>
-        <Button asChild variant="outline">
-          <Link href="/ventas">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Volver a ventas
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link href="/ventas">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Volver a ventas
+            </Link>
+          </Button>
+          {onRetry && (
+            <Button variant="outline" onClick={onRetry}>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Reintentar
+            </Button>
+          )}
+        </div>
       </div>
     );
   }
@@ -146,7 +155,7 @@ export function SaleDetail({ sale, isLoading, error, onVoid, isVoiding }: SaleDe
           </div>
           <div className="flex justify-between text-lg font-bold">
             <span>Total</span>
-            <span>${sale.total.toFixed(2)}</span>
+                    <span>${sale.total.toFixed(2)}</span>
           </div>
         </div>
       </div>

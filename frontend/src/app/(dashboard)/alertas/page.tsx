@@ -11,8 +11,8 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 
 export default function AlertsPage() {
-  const { data: instances, isLoading: loadingInstances, error: instancesError } = useAlertInstances("ACTIVE");
-  const { data: rules, isLoading: loadingRules, error: rulesError } = useAlertRules();
+  const { data: instances, isLoading: loadingInstances, error: instancesError, refetch: refetchInstances } = useAlertInstances("ACTIVE");
+  const { data: rules, isLoading: loadingRules, error: rulesError, refetch: refetchRules } = useAlertRules();
   const acknowledge = useAcknowledgeAlert();
   const resolve = useResolveAlert();
   const evaluate = useEvaluateAlerts();
@@ -71,6 +71,7 @@ export default function AlertsPage() {
         onResolve={handleResolve}
         onEvaluate={handleEvaluate}
         isEvaluating={evaluate.isPending}
+        onRetry={() => refetchInstances()}
       />
 
       <div className="space-y-4">
@@ -89,6 +90,7 @@ export default function AlertsPage() {
           error={rulesError as Error | null}
           onToggle={handleToggle}
           onDelete={handleDelete}
+          onRetry={() => refetchRules()}
         />
       </div>
     </div>

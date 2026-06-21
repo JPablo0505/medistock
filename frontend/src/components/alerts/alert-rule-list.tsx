@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Trash2, Plus, ToggleLeft, ToggleRight } from "lucide-react";
+import { RefreshCw, Trash2, Plus, ToggleLeft, ToggleRight } from "lucide-react";
 import Link from "next/link";
 import type { AlertRule, AlertRuleType } from "@/types";
 
@@ -21,6 +21,7 @@ interface AlertRuleListProps {
   error: Error | null;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
+  onRetry?: () => void;
 }
 
 const typeLabels: Record<AlertRuleType, string> = {
@@ -30,7 +31,7 @@ const typeLabels: Record<AlertRuleType, string> = {
   PRESCRIPTION: "Recetados",
 };
 
-export function AlertRuleList({ rules, isLoading, error, onToggle, onDelete }: AlertRuleListProps) {
+export function AlertRuleList({ rules, isLoading, error, onToggle, onDelete, onRetry }: AlertRuleListProps) {
   if (isLoading) {
     return (
       <div className="space-y-3">
@@ -43,8 +44,14 @@ export function AlertRuleList({ rules, isLoading, error, onToggle, onDelete }: A
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+      <div className="flex flex-col items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
         <p>Error al cargar reglas.</p>
+        {onRetry && (
+          <Button variant="outline" size="sm" onClick={onRetry}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Reintentar
+          </Button>
+        )}
       </div>
     );
   }

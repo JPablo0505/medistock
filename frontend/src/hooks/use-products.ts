@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "@/lib/api-client";
 import type { Product, Category } from "@/types";
+import { toast } from "sonner";
 
 // ─── Query Keys ──────────────────────────────────────────────────────────
 
@@ -83,6 +84,10 @@ export function useCreateProduct() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: productsKeys.lists() });
+      toast.success("Producto creado exitosamente");
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Error al crear producto");
     },
   });
 }
@@ -108,6 +113,10 @@ export function useUpdateProduct() {
       queryClient.invalidateQueries({
         queryKey: productsKeys.detail(data.id),
       });
+      toast.success("Producto actualizado exitosamente");
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Error al actualizar producto");
     },
   });
 }
@@ -120,6 +129,10 @@ export function useDeactivateProduct() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: productsKeys.lists() });
+      toast.success("Producto desactivado");
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Error al desactivar producto");
     },
   });
 }

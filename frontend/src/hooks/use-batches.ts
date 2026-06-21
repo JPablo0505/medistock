@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "@/lib/api-client";
 import type { Batch, BatchDetail, StockProjection } from "@/types";
+import { toast } from "sonner";
 
 // ─── Query Keys ──────────────────────────────────────────────────────────
 
@@ -77,6 +78,10 @@ export function useCreateBatch() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: batchesKeys.lists() });
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success("Lote creado exitosamente");
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Error al crear lote");
     },
   });
 }
@@ -96,6 +101,10 @@ export function useQuarantineBatch() {
       queryClient.invalidateQueries({
         queryKey: batchesKeys.detail(data.id),
       });
+      toast.success("Lote puesto en cuarentena");
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Error al poner en cuarentena");
     },
   });
 }
@@ -115,6 +124,10 @@ export function useReleaseFromQuarantine() {
       queryClient.invalidateQueries({
         queryKey: batchesKeys.detail(data.id),
       });
+      toast.success("Lote liberado de cuarentena");
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Error al liberar de cuarentena");
     },
   });
 }
@@ -134,6 +147,10 @@ export function useDisposeBatch() {
       queryClient.invalidateQueries({
         queryKey: batchesKeys.detail(data.id),
       });
+      toast.success("Lote desechado");
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Error al desechar lote");
     },
   });
 }
@@ -159,6 +176,10 @@ export function useAdjustStock() {
       queryClient.invalidateQueries({
         queryKey: batchesKeys.detail(data.id),
       });
+      toast.success("Stock ajustado exitosamente");
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Error al ajustar stock");
     },
   });
 }

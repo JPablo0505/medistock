@@ -2,7 +2,7 @@
 
 import { useDashboardSummary } from "@/hooks/use-dashboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { StatCardSkeleton } from "@/components/ui/loading-skeletons";
 import { Package, AlertTriangle, Clock, PillBottle, FlaskConical } from "lucide-react";
 
 const statCards = [
@@ -46,6 +46,25 @@ const statCards = [
 export default function DashboardPage() {
   const { data, isLoading } = useDashboardSummary();
 
+  // ─── Loading State ────────────────────────────────────────────────────
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">
+            Overview of your pharmaceutical inventory
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <StatCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -71,11 +90,7 @@ export default function DashboardPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                {isLoading ? (
-                  <Skeleton className="h-8 w-16" />
-                ) : (
-                  <p className="text-3xl font-bold">{value ?? "—"}</p>
-                )}
+                <p className="text-3xl font-bold">{value ?? "—"}</p>
               </CardContent>
             </Card>
           );

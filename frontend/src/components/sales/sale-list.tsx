@@ -26,7 +26,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Package, AlertTriangle } from "lucide-react";
+import { Plus, Package, AlertTriangle, RefreshCw } from "lucide-react";
 import type { SaleSummary, SaleStatus } from "@/types";
 import { useSale } from "@/hooks/use-sales";
 
@@ -34,6 +34,7 @@ interface SaleListProps {
   sales: SaleSummary[] | undefined;
   isLoading: boolean;
   error: Error | null;
+  onRetry?: () => void;
 }
 
 const statusLabels: Record<SaleStatus, string> = {
@@ -46,7 +47,7 @@ const statusColors: Record<SaleStatus, string> = {
   VOIDED: "bg-gray-100 text-gray-800",
 };
 
-export function SaleList({ sales, isLoading, error }: SaleListProps) {
+export function SaleList({ sales, isLoading, error, onRetry }: SaleListProps) {
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
   const { data: saleDetail, isLoading: loadingDetail } = useSale(selectedSaleId ?? "");
 
@@ -62,8 +63,14 @@ export function SaleList({ sales, isLoading, error }: SaleListProps) {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+      <div className="flex flex-col items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
         <p>Error al cargar ventas. Intente de nuevo.</p>
+        {onRetry && (
+          <Button variant="outline" size="sm" onClick={onRetry}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Reintentar
+          </Button>
+        )}
       </div>
     );
   }

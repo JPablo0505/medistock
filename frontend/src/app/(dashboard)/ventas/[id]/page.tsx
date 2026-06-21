@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 export default function SaleDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { data: sale, isLoading, error } = useSale(id);
+  const { data: sale, isLoading, error, refetch } = useSale(id);
   const voidSale = useVoidSale();
 
   const handleVoid = async (reason: string) => {
@@ -29,6 +29,7 @@ export default function SaleDetailPage() {
       error={error as Error | null}
       onVoid={handleVoid}
       isVoiding={voidSale.isPending}
+      onRetry={() => refetch()}
     />
   );
 }

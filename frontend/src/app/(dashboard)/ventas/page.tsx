@@ -7,7 +7,7 @@ import { SaleList } from "@/components/sales/sale-list";
 import { useSales } from "@/hooks/use-sales";
 
 export default function SalesPage() {
-  const { data: sales, isLoading, error } = useSales();
+  const { data: sales, isLoading, error, refetch } = useSales();
 
   return (
     <div className="space-y-6">
@@ -21,7 +21,7 @@ export default function SalesPage() {
         </Button>
       </div>
 
-      <SaleList sales={sales} isLoading={isLoading} error={error as Error | null} />
+      <SaleList sales={sales} isLoading={isLoading} error={error as Error | null} onRetry={() => refetch()} />
     </div>
   );
 }
