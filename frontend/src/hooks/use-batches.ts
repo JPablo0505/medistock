@@ -76,6 +76,7 @@ export function useCreateBatch() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: batchesKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });
 }

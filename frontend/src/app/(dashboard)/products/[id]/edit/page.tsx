@@ -32,8 +32,11 @@ export default function EditProductPage() {
         isControlled: data.isControlled,
         storageCondition: data.storageCondition || undefined,
         unit: data.unit,
+        imageUrl: data.imageUrl || undefined,
         salePrice: data.salePrice || undefined,
         purchasePrice: data.purchasePrice || undefined,
+        expirationDate: data.expirationDate,
+        manufacturingDate: data.manufacturingDate,
       },
     });
 

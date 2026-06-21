@@ -35,7 +35,8 @@ public class ReleaseFromQuarantineUseCase {
 
     public Batch execute(UUID batchId, String reason) {
         String tenantId = TenantContext.getTenantId();
-        String performedBy = "system";
+        if (tenantId == null) tenantId = "default";
+        String performedBy = "admin-user";
 
         Batch batch = batchRepository.findById(batchId)
                 .orElseThrow(() -> new InventoryDomainException("Batch not found: " + batchId));

@@ -12,9 +12,13 @@ export interface Product {
   isControlled: boolean;
   storageCondition: string;
   unit: string;
+  imageUrl?: string;
   salePrice: number;
   purchasePrice: number;
   isActive: boolean;
+  expirationDate: string;
+  manufacturingDate: string;
+  stockQuantity: number;
 }
 
 // ─── Category ───────────────────────────────────────────────────────────────
@@ -33,6 +37,7 @@ export interface Batch {
   id: string;
   tenantId: string;
   productId: string;
+  productName: string | null;
   batchCode: string;
   initialQuantity: number;
   currentQuantity: number;
@@ -167,6 +172,11 @@ export interface AlertInstance {
   id: string;
   alertRuleId: string;
   productId: string;
+  productName?: string;
+  productDosageForm?: string;
+  productManufacturer?: string;
+  productStock?: number;
+  productExpirationDate?: string;
   batchId?: string;
   severity: AlertSeverity;
   message: string;

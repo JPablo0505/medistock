@@ -7,9 +7,9 @@ SET search_path TO sales;
 
 -- batch_allocations: separate table for one-to-many allocations per item
 CREATE TABLE batch_allocations (
-    allocation_id      UUID PRIMARY KEY,
-    item_id            UUID NOT NULL REFERENCES sale_line_items(id) ON DELETE CASCADE,
-    batch_id           UUID NOT NULL,
+    id                 UUID        PRIMARY KEY,
+    item_id            UUID        NOT NULL REFERENCES sale_line_items(id) ON DELETE CASCADE,
+    batch_id           UUID        NOT NULL,
     batch_code         VARCHAR(100) NOT NULL,
     expiration_date    DATE,
     allocated_quantity INTEGER NOT NULL CHECK (allocated_quantity > 0),

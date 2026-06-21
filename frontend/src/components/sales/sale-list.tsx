@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,9 +12,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus } from "lucide-react";
-import type { SaleSummary, SaleStatus } from "@/types";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Plus, Package, AlertTriangle } from "lucide-react";
+import type { SaleSummary, SaleStatus } from "@/types";
+import { useSale } from "@/hooks/use-sales";
 
 interface SaleListProps {
   sales: SaleSummary[] | undefined;
@@ -32,6 +47,9 @@ const statusColors: Record<SaleStatus, string> = {
 };
 
 export function SaleList({ sales, isLoading, error }: SaleListProps) {
+  const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
+  const { data: saleDetail, isLoading: loadingDetail } = useSale(selectedSaleId ?? "");
+
   if (isLoading) {
     return (
       <div className="space-y-3">
@@ -65,37 +83,161 @@ export function SaleList({ sales, isLoading, error }: SaleListProps) {
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>ID</TableHead>
-          <TableHead>Fecha</TableHead>
-          <TableHead>Items</TableHead>
-          <TableHead>Total</TableHead>
-          <TableHead>Estado</TableHead>
-          <TableHead>Realizado por</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {sales.map((sale) => (
-          <TableRow key={sale.id} className="cursor-pointer hover:bg-muted/50">
-            <TableCell>
-              <Link href={`/ventas/${sale.id}`} className="font-mono text-xs">
-                {sale.id.slice(0, 8)}...
-              </Link>
-            </TableCell>
-            <TableCell>{new Date(sale.saleDate).toLocaleDateString()}</TableCell>
-            <TableCell>{sale.itemCount}</TableCell>
-            <TableCell>${sale.total.toFixed(2)}</TableCell>
-            <TableCell>
-              <Badge className={statusColors[sale.status]}>
-                {statusLabels[sale.status]}
-              </Badge>
-            </TableCell>
-            <TableCell>{sale.performedBy}</TableCell>
+    <>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>ID</TableHead>
+            <TableHead>Fecha</TableHead>
+            <TableHead>Items</TableHead>
+            <TableHead>Total</TableHead>
+            <TableHead>Estado</TableHead>
+            <TableHead>Realizado por</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {sales.map((sale) => (
+            <TableRow
+              key={sale.id}
+              className="cursor-pointer hover:bg-muted/50"
+              onClick={() => setSelectedSaleId(sale.id)}
+            >
+              <TableCell>
+                <span className="font-mono text-xs">
+                  {sale.id.slice(0, 8)}...
+                </span>
+              </TableCell>
+              <TableCell>{new Date(sale.saleDate).toLocaleDateString()}</TableCell>
+              <TableCell>{sale.itemCount}</TableCell>
+              <TableCell>${sale.total.toFixed(2)}</TableCell>
+              <TableCell>
+                <Badge className={statusColors[sale.status]}>
+                  {statusLabels[sale.status]}
+                </Badge>
+              </TableCell>
+              <TableCell>{sale.performedBy}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      {/* Sale Detail Dialog */}
+      <Dialog open={!!selectedSaleId} onOpenChange={(open) => { if (!open) setSelectedSaleId(null); }}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {saleDetail ? (
+                <span>
+                  Venta {saleDetail.id.slice(0, 8)}...
+                  <Badge className={`ml-2 ${statusColors[saleDetail.status]}`}>
+                    {statusLabels[saleDetail.status]}
+                  </Badge>
+                </span>
+              ) : "Detalle de venta"}
+            </DialogTitle>
+            <DialogDescription>
+              {saleDetail && (
+                <span>
+                  {new Date(saleDetail.saleDate).toLocaleString("es-AR")} &middot;{" "}
+                  Realizado por: {saleDetail.performedBy}
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingDetail && (
+            <div className="space-y-3 py-4">
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-16 w-full" />
+            </div>
+          )}
+
+          {!loadingDetail && !saleDetail && (
+            <div className="flex flex-col items-center gap-2 py-8 text-muted-foreground">
+              <AlertTriangle className="h-8 w-8" />
+              <p>No se pudo cargar el detalle de la venta.</p>
+            </div>
+          )}
+
+          {!loadingDetail && saleDetail && (
+            <div className="space-y-4">
+              {/* Void notice */}
+              {saleDetail.status === "VOIDED" && saleDetail.voidReason && (
+                <div className="flex items-center gap-3 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  <span>Anulada: {saleDetail.voidReason}</span>
+                </div>
+              )}
+
+              {/* Items table */}
+              <Card>
+                <CardHeader className="py-3">
+                  <CardTitle className="text-sm font-semibold">
+                    Productos vendidos
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Producto</TableHead>
+                        <TableHead>Cantidad</TableHead>
+                        <TableHead>P. Unitario</TableHead>
+                        <TableHead>Total</TableHead>
+                        <TableHead>Lote</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {saleDetail.items.map((item) => (
+                        <TableRow key={item.itemId}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Package className="h-4 w-4 text-muted-foreground" />
+                              <div>
+                                <p className="font-medium">{item.productName}</p>
+                                {item.productSku && (
+                                  <p className="text-xs text-muted-foreground">{item.productSku}</p>
+                                )}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{item.quantity}</TableCell>
+                          <TableCell>${item.unitPrice.toFixed(2)}</TableCell>
+                          <TableCell>${item.totalPrice.toFixed(2)}</TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              {item.batchAllocations.map((alloc, i) => (
+                                <div key={i} className="text-xs text-muted-foreground">
+                                  {alloc.lotNumber} ({alloc.allocatedQuantity}u)
+                                </div>
+                              ))}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+
+              {/* Totals */}
+              <div className="flex justify-end">
+                <div className="w-64 space-y-2 rounded-lg border p-4">
+                  <div className="flex justify-between text-sm">
+                    <span>Subtotal</span>
+                    <span>${saleDetail.subtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-lg font-bold">
+                    <span>Total</span>
+                    <span>${saleDetail.total.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

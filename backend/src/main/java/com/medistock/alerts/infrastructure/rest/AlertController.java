@@ -1,17 +1,23 @@
 package com.medistock.alerts.infrastructure.rest;
 
 import com.medistock.alerts.application.service.*;
+import com.medistock.alerts.domain.model.AlertInstance;
 import com.medistock.alerts.domain.model.AlertInstanceStatus;
 import com.medistock.alerts.domain.port.AlertInstanceRepository;
 import com.medistock.alerts.domain.port.AlertRuleRepository;
 import com.medistock.alerts.infrastructure.rest.dto.*;
+import com.medistock.crosscutting.security.TenantContext;
+import com.medistock.inventory.domain.model.Batch;
+import com.medistock.inventory.domain.port.BatchRepository;
+import com.medistock.productcatalog.domain.model.Product;
+import com.medistock.productcatalog.domain.port.ProductRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/alerts")
@@ -24,6 +30,8 @@ public class AlertController {
     private final ResolveAlertUseCase resolveAlertUseCase;
     private final AlertRuleRepository alertRuleRepository;
     private final AlertInstanceRepository alertInstanceRepository;
+    private final ProductRepository productRepository;
+    private final BatchRepository batchRepository;
 
     public AlertController(CreateAlertRuleUseCase createAlertRuleUseCase,
                            UpdateAlertRuleUseCase updateAlertRuleUseCase,
@@ -31,7 +39,9 @@ public class AlertController {
                            AcknowledgeAlertUseCase acknowledgeAlertUseCase,
                            ResolveAlertUseCase resolveAlertUseCase,
                            AlertRuleRepository alertRuleRepository,
-                           AlertInstanceRepository alertInstanceRepository) {
+                           AlertInstanceRepository alertInstanceRepository,
+                           ProductRepository productRepository,
+                           BatchRepository batchRepository) {
         this.createAlertRuleUseCase = createAlertRuleUseCase;
         this.updateAlertRuleUseCase = updateAlertRuleUseCase;
         this.evaluateAlertRulesUseCase = evaluateAlertRulesUseCase;
@@ -39,6 +49,8 @@ public class AlertController {
         this.resolveAlertUseCase = resolveAlertUseCase;
         this.alertRuleRepository = alertRuleRepository;
         this.alertInstanceRepository = alertInstanceRepository;
+        this.productRepository = productRepository;
+        this.batchRepository = batchRepository;
     }
 
     // ─── Alert Rules ────────────────────────────────────────────────────
@@ -46,7 +58,9 @@ public class AlertController {
     @PostMapping("/rules")
     public ResponseEntity<AlertRuleResponse> createRule(
             @Valid @RequestBody CreateAlertRuleRequest request,
-            @RequestHeader("X-Tenant-Id") String tenantId) {
+            @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
+        if (tenantId == null) tenantId = TenantContext.getTenantId();
+        if (tenantId == null) tenantId = "default";
         var rule = createAlertRuleUseCase.execute(
                 tenantId, request.name(), request.description(),
                 request.type(), request.config());
@@ -57,7 +71,9 @@ public class AlertController {
     @GetMapping("/rules")
     public ResponseEntity<List<AlertRuleResponse>> listRules(
             @RequestParam(required = false) String type,
-            @RequestHeader("X-Tenant-Id") String tenantId) {
+            @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
+        if (tenantId == null) tenantId = TenantContext.getTenantId();
+        if (tenantId == null) tenantId = "default";
         var rules = alertRuleRepository.findByType(tenantId, type).stream()
                 .map(AlertRuleResponse::from)
                 .toList();
@@ -102,24 +118,24 @@ public class AlertController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size,
             @RequestParam(required = false) String status,
-            @RequestHeader("X-Tenant-Id") String tenantId) {
-        List<AlertInstanceResponse> instances;
+            @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
+        if (tenantId == null) tenantId = TenantContext.getTenantId();
+        if (tenantId == null) tenantId = "default";
+        List<AlertInstance> instances;
         if (status != null) {
             var statusEnum = AlertInstanceStatus.valueOf(status.toUpperCase());
-            instances = alertInstanceRepository.findByStatus(tenantId, statusEnum).stream()
-                    .map(AlertInstanceResponse::from)
-                    .toList();
+            instances = alertInstanceRepository.findByStatus(tenantId, statusEnum);
         } else {
-            instances = alertInstanceRepository.findAll(tenantId, page, size).stream()
-                    .map(AlertInstanceResponse::from)
-                    .toList();
+            instances = alertInstanceRepository.findAll(tenantId, page, size);
         }
-        return ResponseEntity.ok(instances);
+        return ResponseEntity.ok(enrichWithProductInfo(instances));
     }
 
     @GetMapping("/instances/count")
     public ResponseEntity<Long> countActive(
-            @RequestHeader("X-Tenant-Id") String tenantId) {
+            @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
+        if (tenantId == null) tenantId = TenantContext.getTenantId();
+        if (tenantId == null) tenantId = "default";
         return ResponseEntity.ok(
                 alertInstanceRepository.countByStatus(tenantId, AlertInstanceStatus.ACTIVE));
     }
@@ -127,20 +143,73 @@ public class AlertController {
     @PostMapping("/instances/{id}/acknowledge")
     public ResponseEntity<AlertInstanceResponse> acknowledge(@PathVariable UUID id) {
         var instance = acknowledgeAlertUseCase.execute(id);
-        return ResponseEntity.ok(AlertInstanceResponse.from(instance));
+        return ResponseEntity.ok(withProductInfo(instance));
     }
 
     @PostMapping("/instances/{id}/resolve")
     public ResponseEntity<AlertInstanceResponse> resolve(@PathVariable UUID id) {
         var instance = resolveAlertUseCase.execute(id);
-        return ResponseEntity.ok(AlertInstanceResponse.from(instance));
+        return ResponseEntity.ok(withProductInfo(instance));
+    }
+
+    // ─── Product enrichment helpers ──────────────────────────────────────
+
+    private List<AlertInstanceResponse> enrichWithProductInfo(List<AlertInstance> instances) {
+        // Collect unique product IDs from all instances
+        Set<UUID> productIds = instances.stream()
+                .map(AlertInstance::getProductId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        // Load products and compute stock for each
+        Map<UUID, AlertInstanceResponse.ProductEnrichment> productMap = new HashMap<>();
+        for (UUID pid : productIds) {
+            productRepository.findById(pid).ifPresent(product -> {
+                int stock = computeStockForProduct(product.getId());
+                productMap.put(pid, new AlertInstanceResponse.ProductEnrichment(
+                        product.getName(),
+                        product.getDosageForm(),
+                        product.getManufacturer(),
+                        stock,
+                        product.getExpirationDate()
+                ));
+            });
+        }
+
+        return instances.stream()
+                .map(inst -> AlertInstanceResponse.from(inst, productMap.get(inst.getProductId())))
+                .toList();
+    }
+
+    private AlertInstanceResponse withProductInfo(AlertInstance instance) {
+        AlertInstanceResponse.ProductEnrichment enrichment = null;
+        if (instance.getProductId() != null) {
+            var productOpt = productRepository.findById(instance.getProductId());
+            if (productOpt.isPresent()) {
+                var product = productOpt.get();
+                int stock = computeStockForProduct(product.getId());
+                enrichment = new AlertInstanceResponse.ProductEnrichment(
+                        product.getName(), product.getDosageForm(),
+                        product.getManufacturer(), stock, product.getExpirationDate());
+            }
+        }
+        return AlertInstanceResponse.from(instance, enrichment);
+    }
+
+    private int computeStockForProduct(UUID productId) {
+        return batchRepository.findByProductId(productId).stream()
+                .filter(b -> b.getStatus() == com.medistock.inventory.domain.model.BatchStatus.ACTIVE)
+                .mapToInt(com.medistock.inventory.domain.model.Batch::getCurrentQuantity)
+                .sum();
     }
 
     // ─── Evaluation ─────────────────────────────────────────────────────
 
     @PostMapping("/evaluate")
     public ResponseEntity<Integer> evaluate(
-            @RequestHeader("X-Tenant-Id") String tenantId) {
+            @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
+        if (tenantId == null) tenantId = TenantContext.getTenantId();
+        if (tenantId == null) tenantId = "default";
         var triggered = evaluateAlertRulesUseCase.evaluateAll(tenantId);
         return ResponseEntity.ok(triggered.size());
     }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useAlertInstances, useAcknowledgeAlert, useResolveAlert, useEvaluateAlerts } from "@/hooks/use-alerts";
 import { AlertInstanceList } from "@/components/alerts/alert-instance-list";
 import { AlertRuleList } from "@/components/alerts/alert-rule-list";
@@ -17,6 +18,12 @@ export default function AlertsPage() {
   const evaluate = useEvaluateAlerts();
   const toggle = useToggleAlertRule();
   const del = useDeleteAlertRule();
+
+  // Auto-evaluate alerts on page load to ensure rules exist and alerts are generated
+  useEffect(() => {
+    evaluate.mutate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleAcknowledge = async (id: string) => {
     try {

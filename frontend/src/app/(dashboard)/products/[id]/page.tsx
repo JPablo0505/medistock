@@ -140,6 +140,12 @@ export default function ProductDetailPage() {
       label: "Purchase Price",
       value: `$${product.purchasePrice.toFixed(2)}`,
     },
+    {
+      label: "Stock",
+      value: `${product.stockQuantity ?? 0} unidades`,
+    },
+    { label: "Expiration Date", value: product.expirationDate },
+    { label: "Manufacturing Date", value: product.manufacturingDate },
   ];
 
   return (
@@ -201,6 +207,21 @@ export default function ProductDetailPage() {
           <AlertTriangle className="h-4 w-4" />
           This product is deactivated. It will not appear in active product
           listings.
+        </div>
+      )}
+
+      {/* Product Image */}
+      {product.imageUrl && (
+        <div className="overflow-hidden rounded-xl border">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={product.imageUrl}
+            alt={product.name}
+            className="max-h-96 w-full object-contain bg-muted"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
+          />
         </div>
       )}
 

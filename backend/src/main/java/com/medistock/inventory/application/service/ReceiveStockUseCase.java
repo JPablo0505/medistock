@@ -37,11 +37,13 @@ public class ReceiveStockUseCase {
 
     public Batch execute(UUID productId, String batchCode, int quantity,
                          LocalDate expirationDate, BigDecimal costPerUnit,
-                         String category, String notes) {
+                         LocalDate manufacturingDate, String category, String notes) {
         String tenantId = TenantContext.getTenantId();
-        String performedBy = "system"; // TODO: extract from JWT when user context is available
+        if (tenantId == null) tenantId = "default";
+        String performedBy = "admin-user";
 
         Batch batch = Batch.receive(tenantId, productId, batchCode, quantity, expirationDate, costPerUnit);
+        batch.setManufacturingDate(manufacturingDate);
         batch.setCategory(category);
         batch.setNotes(notes);
 

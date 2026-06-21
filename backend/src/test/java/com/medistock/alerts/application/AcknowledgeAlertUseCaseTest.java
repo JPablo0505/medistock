@@ -31,7 +31,7 @@ class AcknowledgeAlertUseCaseTest {
 
     @Test
     void shouldAcknowledgeAlert() {
-        var instance = new AlertInstance(UUID.randomUUID(), UUID.randomUUID(), null,
+        var instance = new AlertInstance("default", UUID.randomUUID(), UUID.randomUUID(), null,
                 AlertSeverity.MEDIUM, "test");
         when(alertInstanceRepository.findById(instance.getId())).thenReturn(Optional.of(instance));
         when(alertInstanceRepository.save(any())).thenAnswer(i -> i.getArgument(0));

@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -32,8 +33,17 @@ public class JpaSaleRepository implements SaleRepository {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Sale> findById(UUID saleId) {
         return springRepo.findById(saleId).map(this::toDomain);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Sale> findAll() {
+        return springRepo.findAll().stream()
+                .map(this::toDomain)
+                .toList();
     }
 
     @Override
@@ -44,6 +54,7 @@ public class JpaSaleRepository implements SaleRepository {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Sale> findByTenant(String tenantId, int page, int size, String sort) {
         Sort sorting = parseSort(sort);
         Pageable pageable = PageRequest.of(page, size, sorting);
@@ -54,6 +65,7 @@ public class JpaSaleRepository implements SaleRepository {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Sale> findByTenantWithFilters(String tenantId, UUID productId, String status,
                                                String dateFrom, String dateTo,
                                                int page, int size, String sort) {
@@ -101,6 +113,13 @@ public class JpaSaleRepository implements SaleRepository {
         entity.setStatus(domain.getStatus().name());
         entity.setVoidedAt(domain.getVoidedAt());
         entity.setVoidReason(domain.getVoidReason());
+
+        // Generate sale number: V-YYYYMMDD-HHMMSS-xxxx (last 4 of UUID)
+        if (entity.getSaleNumber() == null) {
+            String uuidSuffix = domain.getSaleId().toString().substring(0, 4).toUpperCase();
+            entity.setSaleNumber("V-" + java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")
+                    .format(domain.getSaleDate()) + "-" + uuidSuffix);
+        }
 
         List<JpaSaleItemEntity> itemEntities = domain.getItems().stream()
                 .map(item -> toItemEntity(item, entity))

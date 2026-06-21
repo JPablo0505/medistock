@@ -7,12 +7,16 @@ SET search_path TO sales;
 
 -- Sales — aggregate root
 CREATE TABLE sales (
-    id              VARCHAR(36)  PRIMARY KEY,
+    id              UUID         PRIMARY KEY,
     tenant_id       VARCHAR(36)  NOT NULL,
     sale_number     VARCHAR(50)  NOT NULL,
     customer_name   VARCHAR(200),
     customer_id     VARCHAR(36),
+    sale_date       TIMESTAMP    NOT NULL DEFAULT NOW(),
+    sale_type       VARCHAR(20)  NOT NULL DEFAULT 'MANUAL_ENTRY',
+    subtotal        DECIMAL(12, 2),
     total_amount    DECIMAL(12, 2) NOT NULL,
+    performed_by    VARCHAR(100),
     status          VARCHAR(20)  NOT NULL DEFAULT 'COMPLETED'
                     CHECK (status IN ('COMPLETED', 'VOIDED')),
     voided_at       TIMESTAMP,
@@ -27,10 +31,10 @@ CREATE INDEX idx_sales_created ON sales(tenant_id, created_at DESC);
 
 -- Sale line items
 CREATE TABLE sale_line_items (
-    id              VARCHAR(36)  PRIMARY KEY,
+    id              UUID         PRIMARY KEY,
     tenant_id       VARCHAR(36)  NOT NULL,
-    sale_id         VARCHAR(36)  NOT NULL REFERENCES sales(id),
-    product_id      VARCHAR(36)  NOT NULL,
+    sale_id         UUID         NOT NULL REFERENCES sales(id),
+    product_id      UUID         NOT NULL,
     product_name    VARCHAR(200) NOT NULL,
     quantity        INTEGER      NOT NULL CHECK (quantity > 0),
     unit_price      DECIMAL(12, 2) NOT NULL,

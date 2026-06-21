@@ -1,5 +1,6 @@
 package com.medistock.crosscutting.web;
 
+import com.medistock.productcatalog.domain.model.ProductNotFoundException;
 import com.medistock.shared.domain.DomainException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +48,18 @@ public class GlobalExceptionHandler {
                         HttpStatus.CONFLICT.value(),
                         "OPTIMISTIC_LOCK",
                         "Resource was modified by another user. Refresh and retry.",
+                        List.of(),
+                        getCorrelationId(request)));
+    }
+
+    @ExceptionHandler(ProductNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleProductNotFound(ProductNotFoundException ex,
+                                                               WebRequest request) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse(
+                        HttpStatus.NOT_FOUND.value(),
+                        ex.getErrorCode(),
+                        ex.getMessage(),
                         List.of(),
                         getCorrelationId(request)));
     }

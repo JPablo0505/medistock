@@ -8,6 +8,7 @@ import java.util.UUID;
 public class AlertInstance {
 
     private UUID id;
+    private String tenantId;
     private UUID alertRuleId;
     private UUID productId;
     private UUID batchId;
@@ -19,9 +20,10 @@ public class AlertInstance {
     private LocalDateTime acknowledgedAt;
     private LocalDateTime resolvedAt;
 
-    public AlertInstance(UUID alertRuleId, UUID productId, UUID batchId,
+    public AlertInstance(String tenantId, UUID alertRuleId, UUID productId, UUID batchId,
                          AlertSeverity severity, String message) {
         this.id = UUID.randomUUID();
+        this.tenantId = tenantId;
         this.alertRuleId = alertRuleId;
         this.productId = productId;
         this.batchId = batchId;
@@ -33,12 +35,13 @@ public class AlertInstance {
     }
 
     // Restore constructor for persistence reconstruction
-    private AlertInstance(UUID id, UUID alertRuleId, UUID productId, UUID batchId,
+    private AlertInstance(UUID id, String tenantId, UUID alertRuleId, UUID productId, UUID batchId,
                           AlertSeverity severity, String message,
                           AlertInstanceStatus status, LocalDateTime createdAt,
                           LocalDateTime updatedAt, LocalDateTime acknowledgedAt,
                           LocalDateTime resolvedAt) {
         this.id = id;
+        this.tenantId = tenantId;
         this.alertRuleId = alertRuleId;
         this.productId = productId;
         this.batchId = batchId;
@@ -51,19 +54,20 @@ public class AlertInstance {
         this.resolvedAt = resolvedAt;
     }
 
-    public static AlertInstance restore(UUID id, UUID alertRuleId, UUID productId,
+    public static AlertInstance restore(UUID id, String tenantId, UUID alertRuleId, UUID productId,
                                          UUID batchId, AlertSeverity severity,
                                          String message, AlertInstanceStatus status,
                                          LocalDateTime createdAt, LocalDateTime updatedAt,
                                          LocalDateTime acknowledgedAt,
                                          LocalDateTime resolvedAt) {
-        return new AlertInstance(id, alertRuleId, productId, batchId, severity,
+        return new AlertInstance(id, tenantId, alertRuleId, productId, batchId, severity,
                 message, status, createdAt, updatedAt, acknowledgedAt, resolvedAt);
     }
 
     // --- Getters ---
 
     public UUID getId() { return id; }
+    public String getTenantId() { return tenantId; }
     public UUID getAlertRuleId() { return alertRuleId; }
     public UUID getProductId() { return productId; }
     public UUID getBatchId() { return batchId; }

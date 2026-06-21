@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "alert_rules")
+@Table(name = "alert_rules", schema = "alerting")
 public class JpaAlertRuleEntity {
 
     @Id

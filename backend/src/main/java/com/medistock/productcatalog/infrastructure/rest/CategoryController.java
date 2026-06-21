@@ -23,6 +23,7 @@ public class CategoryController {
     @PostMapping
     public ResponseEntity<CategoryResponse> create(@Valid @RequestBody CreateCategoryRequest request) {
         String tenantId = TenantContext.getTenantId();
+        if (tenantId == null) tenantId = "default";
         Category category = Category.create(tenantId, request.name(), request.description());
         Category saved = categoryRepository.save(category);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -33,6 +34,7 @@ public class CategoryController {
     @GetMapping
     public ResponseEntity<List<CategoryResponse>> list() {
         String tenantId = TenantContext.getTenantId();
+        if (tenantId == null) tenantId = "default";
         List<CategoryResponse> categories = categoryRepository.findByTenantId(tenantId).stream()
                 .map(c -> new CategoryResponse(c.getId(), c.getName(),
                         c.getDescription(), null, null))

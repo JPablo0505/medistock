@@ -1,6 +1,7 @@
 package com.medistock.productcatalog.application.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.UUID;
 
 public record ProductDTO(
@@ -16,7 +17,11 @@ public record ProductDTO(
         boolean isControlled,
         String storageCondition,
         String unit,
+        String imageUrl,
         BigDecimal salePrice,
         BigDecimal purchasePrice,
-        boolean isActive
+        boolean isActive,
+        LocalDate expirationDate,
+        LocalDate manufacturingDate,
+        int stockQuantity
 ) {}

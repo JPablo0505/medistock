@@ -20,7 +20,9 @@ public class DeactivateProductUseCase {
     public ProductDTO execute(UUID id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
-        product.deactivate();
+        if (product.isActive()) {
+            product.deactivate();
+        }
         Product saved = productRepository.save(product);
         return toDTO(saved);
     }
@@ -30,10 +32,12 @@ public class DeactivateProductUseCase {
                 p.getId(), p.getTenantId(), p.getName(), p.getGenericName(),
                 p.getCategoryId(), p.getConcentration(), p.getDosageForm(),
                 p.getManufacturer(), p.isRequiresPrescription(), p.isControlled(),
-                p.getStorageCondition(), p.getUnit(),
+                p.getStorageCondition(), p.getUnit(), p.getImageUrl(),
                 p.getSalePrice() != null ? p.getSalePrice().amount() : null,
                 p.getPurchasePrice() != null ? p.getPurchasePrice().amount() : null,
-                p.isActive()
+                p.isActive(),
+                p.getExpirationDate(), p.getManufacturingDate(),
+                0
         );
     }
 }

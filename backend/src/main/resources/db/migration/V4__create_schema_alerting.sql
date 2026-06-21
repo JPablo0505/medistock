@@ -1,48 +1,42 @@
 -- V4__create_schema_alerting.sql
 -- Alerting bounded context schema.
--- Owned by: AlertingContext
+-- Final version aligned with JPA entities.
 
 CREATE SCHEMA IF NOT EXISTS alerting;
 SET search_path TO alerting;
 
 -- Alert rules — define thresholds and conditions for alerts
 CREATE TABLE alert_rules (
-    id              VARCHAR(36)  PRIMARY KEY,
+    id              UUID         PRIMARY KEY,
     tenant_id       VARCHAR(36)  NOT NULL,
-    name            VARCHAR(200) NOT NULL,
-    alert_type      VARCHAR(30)  NOT NULL
-                    CHECK (alert_type IN ('LOW_STOCK', 'NEAR_EXPIRY', 'EXPIRED', 'BATCH_QUARANTINED')),
-    severity        VARCHAR(10)  NOT NULL DEFAULT 'WARNING'
-                    CHECK (severity IN ('WARNING', 'CRITICAL')),
-    condition_config JSONB       NOT NULL,
+    name            VARCHAR(255) NOT NULL,
+    description     TEXT,
+    rule_type       VARCHAR(50)  NOT NULL,
+    config_json     TEXT,
     is_active       BOOLEAN      NOT NULL DEFAULT TRUE,
     created_at      TIMESTAMP    NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMP    NOT NULL DEFAULT NOW(),
-    version         BIGINT       NOT NULL DEFAULT 0
+    updated_at      TIMESTAMP    NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_alert_rules_tenant ON alert_rules(tenant_id);
-CREATE INDEX idx_alert_rules_type ON alert_rules(tenant_id, alert_type);
+CREATE INDEX idx_alert_rules_type ON alert_rules(rule_type);
 
 -- Alert instances — individual triggered alerts
 CREATE TABLE alert_instances (
-    id              VARCHAR(36)  PRIMARY KEY,
+    id              UUID         PRIMARY KEY,
     tenant_id       VARCHAR(36)  NOT NULL,
-    alert_rule_id   VARCHAR(36)  REFERENCES alert_rules(id),
-    alert_type      VARCHAR(30)  NOT NULL,
-    severity        VARCHAR(10)  NOT NULL,
-    title           VARCHAR(300) NOT NULL,
-    message         TEXT,
-    reference_type  VARCHAR(30),          -- 'BATCH', 'PRODUCT', etc.
-    reference_id    VARCHAR(36),
-    is_dismissed    BOOLEAN      NOT NULL DEFAULT FALSE,
-    is_resolved     BOOLEAN      NOT NULL DEFAULT FALSE,
+    alert_rule_id   UUID         NOT NULL,
+    product_id      UUID         NOT NULL,
+    batch_id        UUID,
+    severity        VARCHAR(20)  NOT NULL,
+    message         VARCHAR(500) NOT NULL,
+    status          VARCHAR(20)  NOT NULL,
+    acknowledged_at TIMESTAMP,
     resolved_at     TIMESTAMP,
     created_at      TIMESTAMP    NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMP    NOT NULL DEFAULT NOW(),
-    version         BIGINT       NOT NULL DEFAULT 0
+    updated_at      TIMESTAMP    NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_alert_instances_tenant ON alert_instances(tenant_id);
-CREATE INDEX idx_alert_instances_type ON alert_instances(tenant_id, alert_type, is_resolved);
-CREATE INDEX idx_alert_instances_unresolved ON alert_instances(tenant_id, is_resolved, severity);
+CREATE INDEX idx_alert_instances_status ON alert_instances(status);
+CREATE INDEX idx_alert_instances_rule_product ON alert_instances(alert_rule_id, product_id);

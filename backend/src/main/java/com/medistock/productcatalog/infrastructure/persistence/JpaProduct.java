@@ -5,6 +5,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
@@ -41,11 +42,20 @@ public class JpaProduct extends BaseEntity {
     @Column(nullable = false, length = 20)
     private String unit;
 
+    @Column(name = "image_url", length = 500)
+    private String imageUrl;
+
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal salePrice;
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal purchasePrice;
+
+    @Column(name = "expiration_date", nullable = false)
+    private LocalDate expirationDate;
+
+    @Column(name = "manufacturing_date", nullable = false)
+    private LocalDate manufacturingDate;
 
     @Column(nullable = false)
     private boolean isActive;
@@ -82,6 +92,9 @@ public class JpaProduct extends BaseEntity {
     public String getUnit() { return unit; }
     public void setUnit(String unit) { this.unit = unit; }
 
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
     public BigDecimal getSalePrice() { return salePrice; }
     public void setSalePrice(BigDecimal salePrice) { this.salePrice = salePrice; }
 
@@ -90,4 +103,10 @@ public class JpaProduct extends BaseEntity {
 
     public boolean isActive() { return isActive; }
     public void setActive(boolean active) { isActive = active; }
+
+    public LocalDate getExpirationDate() { return expirationDate; }
+    public void setExpirationDate(LocalDate expirationDate) { this.expirationDate = expirationDate; }
+
+    public LocalDate getManufacturingDate() { return manufacturingDate; }
+    public void setManufacturingDate(LocalDate manufacturingDate) { this.manufacturingDate = manufacturingDate; }
 }

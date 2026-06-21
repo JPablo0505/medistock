@@ -36,6 +36,9 @@ public class JpaSaleEntity extends BaseEntity {
     @Column(name = "void_reason", length = 500)
     private String voidReason;
 
+    @Column(name = "sale_number", nullable = false, length = 50)
+    private String saleNumber;
+
     @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<JpaSaleItemEntity> items = new ArrayList<>();
 
@@ -64,6 +67,9 @@ public class JpaSaleEntity extends BaseEntity {
 
     public String getVoidReason() { return voidReason; }
     public void setVoidReason(String voidReason) { this.voidReason = voidReason; }
+
+    public String getSaleNumber() { return saleNumber; }
+    public void setSaleNumber(String saleNumber) { this.saleNumber = saleNumber; }
 
     public List<JpaSaleItemEntity> getItems() { return items; }
     public void setItems(List<JpaSaleItemEntity> items) { this.items = items; }

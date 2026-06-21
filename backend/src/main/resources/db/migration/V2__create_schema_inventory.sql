@@ -7,7 +7,7 @@ SET search_path TO inventory;
 
 -- Batches — core aggregate for FEFO engine
 CREATE TABLE batches (
-    id                VARCHAR(36)  PRIMARY KEY,
+    id                UUID         PRIMARY KEY,
     tenant_id         VARCHAR(36)  NOT NULL,
     product_id        VARCHAR(36)  NOT NULL,
     batch_code        VARCHAR(100) NOT NULL,
@@ -30,9 +30,9 @@ CREATE INDEX idx_batches_status ON batches(tenant_id, status);
 
 -- Movements — immutable append-only ledger
 CREATE TABLE movements (
-    id              VARCHAR(36)  PRIMARY KEY,
+    id              UUID         PRIMARY KEY,
     tenant_id       VARCHAR(36)  NOT NULL,
-    batch_id        VARCHAR(36)  NOT NULL REFERENCES batches(id),
+    batch_id        VARCHAR(36)  NOT NULL,
     product_id      VARCHAR(36)  NOT NULL,
     type            VARCHAR(30)  NOT NULL
                     CHECK (type IN ('RECEIPT', 'SALE', 'ADJUSTMENT', 'RETURN', 'WRITE_OFF', 'TRANSFER')),
@@ -40,7 +40,9 @@ CREATE TABLE movements (
     reference_id    VARCHAR(36),          -- sale ID, adjustment ID, etc.
     reason          VARCHAR(200),
     unit_cost       DECIMAL(12, 4),
-    created_at      TIMESTAMP    NOT NULL DEFAULT NOW()
+    created_at      TIMESTAMP    NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMP    NOT NULL DEFAULT NOW(),
+    version         BIGINT       NOT NULL DEFAULT 0
 );
 
 CREATE INDEX idx_movements_batch ON movements(batch_id);
@@ -49,7 +51,7 @@ CREATE INDEX idx_movements_created ON movements(tenant_id, created_at DESC);
 
 -- Stock projection — event-updated read model
 CREATE TABLE stock_projection (
-    id              VARCHAR(36)  PRIMARY KEY,
+    id              UUID         PRIMARY KEY,
     tenant_id       VARCHAR(36)  NOT NULL,
     product_id      VARCHAR(36)  NOT NULL,
     total_physical  INTEGER      NOT NULL DEFAULT 0,

@@ -30,10 +30,12 @@ public class ReactivateProductUseCase {
                 p.getId(), p.getTenantId(), p.getName(), p.getGenericName(),
                 p.getCategoryId(), p.getConcentration(), p.getDosageForm(),
                 p.getManufacturer(), p.isRequiresPrescription(), p.isControlled(),
-                p.getStorageCondition(), p.getUnit(),
+                p.getStorageCondition(), p.getUnit(), p.getImageUrl(),
                 p.getSalePrice() != null ? p.getSalePrice().amount() : null,
                 p.getPurchasePrice() != null ? p.getPurchasePrice().amount() : null,
-                p.isActive()
+                p.isActive(),
+                p.getExpirationDate(), p.getManufacturingDate(),
+                0
         );
     }
 }

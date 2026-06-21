@@ -23,6 +23,10 @@ public class JpaAlertInstanceRepository implements AlertInstanceRepository {
     @Override
     public AlertInstance save(AlertInstance instance) {
         JpaAlertInstanceEntity entity = toEntity(instance);
+        // Ensure tenantId is set on the entity
+        if (entity.getTenantId() == null) {
+            entity.setTenantId("default");
+        }
         JpaAlertInstanceEntity saved = springRepo.save(entity);
         return toDomain(saved);
     }
@@ -41,6 +45,11 @@ public class JpaAlertInstanceRepository implements AlertInstanceRepository {
 
     @Override
     public List<AlertInstance> findByStatus(String tenantId, AlertInstanceStatus status) {
+        if (tenantId != null) {
+            return springRepo.findByTenantIdAndStatusOrderByCreatedAtDesc(tenantId, status.name()).stream()
+                    .map(this::toDomain)
+                    .toList();
+        }
         return springRepo.findByStatusOrderByCreatedAtDesc(status.name()).stream()
                 .map(this::toDomain)
                 .toList();
@@ -57,6 +66,9 @@ public class JpaAlertInstanceRepository implements AlertInstanceRepository {
 
     @Override
     public long countByStatus(String tenantId, AlertInstanceStatus status) {
+        if (tenantId != null) {
+            return springRepo.countByTenantIdAndStatus(tenantId, status.name());
+        }
         return springRepo.countByStatus(status.name());
     }
 
@@ -81,6 +93,7 @@ public class JpaAlertInstanceRepository implements AlertInstanceRepository {
     private JpaAlertInstanceEntity toEntity(AlertInstance instance) {
         JpaAlertInstanceEntity entity = new JpaAlertInstanceEntity();
         entity.setId(instance.getId());
+        entity.setTenantId(instance.getTenantId() != null ? instance.getTenantId() : "default");
         entity.setAlertRuleId(instance.getAlertRuleId());
         entity.setProductId(instance.getProductId());
         entity.setBatchId(instance.getBatchId());
@@ -97,6 +110,7 @@ public class JpaAlertInstanceRepository implements AlertInstanceRepository {
     private AlertInstance toDomain(JpaAlertInstanceEntity entity) {
         return AlertInstance.restore(
                 entity.getId(),
+                entity.getTenantId(),
                 entity.getAlertRuleId(),
                 entity.getProductId(),
                 entity.getBatchId(),

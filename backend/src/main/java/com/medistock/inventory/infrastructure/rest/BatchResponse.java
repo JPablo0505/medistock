@@ -10,6 +10,7 @@ public record BatchResponse(
         UUID id,
         String tenantId,
         UUID productId,
+        String productName,
         String batchCode,
         int initialQuantity,
         int currentQuantity,
@@ -24,10 +25,22 @@ public record BatchResponse(
     public static BatchResponse fromDomain(Batch batch) {
         return new BatchResponse(
                 batch.getId(), batch.getTenantId(), batch.getProductId(),
+                null,
                 batch.getBatchCode(), batch.getInitialQuantity(), batch.getCurrentQuantity(),
                 batch.getExpirationDate(), batch.getManufacturingDate(),
                 batch.getCostPerUnit(), batch.getStatus().name(),
-                batch.getCategory(), batch.getNotes(), null // createdAt not on domain
+                batch.getCategory(), batch.getNotes(), null
+        );
+    }
+
+    public static BatchResponse fromDomain(Batch batch, String productName) {
+        return new BatchResponse(
+                batch.getId(), batch.getTenantId(), batch.getProductId(),
+                productName,
+                batch.getBatchCode(), batch.getInitialQuantity(), batch.getCurrentQuantity(),
+                batch.getExpirationDate(), batch.getManufacturingDate(),
+                batch.getCostPerUnit(), batch.getStatus().name(),
+                batch.getCategory(), batch.getNotes(), null
         );
     }
 }

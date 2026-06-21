@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, Eye, RefreshCw, AlertTriangle } from "lucide-react";
+import { CheckCircle, Eye, RefreshCw, AlertTriangle, Package } from "lucide-react";
 import type { AlertInstance, AlertInstanceStatus, AlertSeverity } from "@/types";
 
 interface AlertInstanceListProps {
@@ -30,6 +30,17 @@ const statusLabels: Record<AlertInstanceStatus, string> = {
   RESOLVED: "Resuelta",
 };
 
+function formatDate(dateStr: string): string {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString("es-AR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+}
+
 export function AlertInstanceList({
   instances,
   isLoading,
@@ -52,7 +63,7 @@ export function AlertInstanceList({
         {isLoading && (
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full" />
+              <Skeleton key={i} className="h-24 w-full" />
             ))}
           </div>
         )}
@@ -77,19 +88,52 @@ export function AlertInstanceList({
                 key={instance.id}
                 className="flex items-start justify-between rounded-lg border p-4"
               >
-                <div className="flex-1 space-y-1">
+                <div className="flex-1 space-y-2">
                   <div className="flex items-center gap-2">
                     <Badge className={severityColors[instance.severity]}>
                       {instance.severity}
                     </Badge>
                     <Badge variant="outline">{statusLabels[instance.status]}</Badge>
                   </div>
-                  <p className="text-sm">{instance.message}</p>
+                  <p className="text-sm font-medium">{instance.message}</p>
+
+                  {/* Product info */}
+                  {instance.productName && (
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Package className="h-3 w-3" />
+                        {instance.productName}
+                      </span>
+                      {instance.productDosageForm && (
+                        <span>{instance.productDosageForm}</span>
+                      )}
+                      {instance.productManufacturer && (
+                        <span>{instance.productManufacturer}</span>
+                      )}
+                      {instance.productStock !== undefined && (
+                        <span
+                          className={
+                            instance.productStock === 0
+                              ? "font-semibold text-destructive"
+                              : ""
+                          }
+                        >
+                          Stock: {instance.productStock}
+                        </span>
+                      )}
+                      {instance.productExpirationDate && (
+                        <span>
+                          Vence: {formatDate(instance.productExpirationDate)}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
                   <p className="text-xs text-muted-foreground">
                     {new Date(instance.createdAt).toLocaleString()}
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 shrink-0">
                   {instance.status === "ACTIVE" && (
                     <Button
                       variant="outline"

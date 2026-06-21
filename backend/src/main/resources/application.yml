@@ -7,8 +7,8 @@ spring:
 
   datasource:
     url: jdbc:postgresql://localhost:5432/medistock
-    username: ${DB_USERNAME:medistock}
-    password: ${DB_PASSWORD:medistock}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:root}
 
   jpa:
     hibernate:

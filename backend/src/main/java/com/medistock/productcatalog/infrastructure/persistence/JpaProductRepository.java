@@ -27,6 +27,13 @@ public class JpaProductRepository implements ProductRepository {
     }
 
     @Override
+    public List<Product> findAll() {
+        return springRepo.findAllByOrderByName().stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
     public List<Product> findByTenantId(String tenantId) {
         return springRepo.findByTenantIdOrderByName(tenantId).stream()
                 .map(this::toDomain)
@@ -43,6 +50,9 @@ public class JpaProductRepository implements ProductRepository {
     @Override
     public Product save(Product product) {
         JpaProduct jpa = toJpa(product);
+        // Preserve version to prevent isNew()=true which causes persist() instead of merge()
+        springRepo.findById(product.getId()).ifPresent(existing ->
+                jpa.setVersion(existing.getVersion()));
         JpaProduct saved = springRepo.save(jpa);
         return toDomain(saved);
     }
@@ -53,9 +63,10 @@ public class JpaProductRepository implements ProductRepository {
     }
 
     private Product toDomain(JpaProduct jpa) {
-        Product product = Product.register(jpa.getTenantId(), jpa.getName(), jpa.getUnit());
-        // Use reflection-like field update since Product uses a private constructor
-        // Instead, we update via the public update() method
+        Product product = Product.reconstitute(
+                jpa.getId(), jpa.getTenantId(), jpa.getName(), jpa.getUnit(), jpa.getImageUrl(),
+                jpa.getExpirationDate(), jpa.getManufacturingDate()
+        );
         product.update(
                 jpa.getName(),
                 jpa.getGenericName(),
@@ -68,7 +79,10 @@ public class JpaProductRepository implements ProductRepository {
                 jpa.getStorageCondition(),
                 jpa.getUnit(),
                 jpa.getSalePrice(),
-                jpa.getPurchasePrice()
+                jpa.getPurchasePrice(),
+                jpa.getImageUrl(),
+                jpa.getExpirationDate(),
+                jpa.getManufacturingDate()
         );
         if (!jpa.isActive()) {
             try { product.deactivate(); } catch (Exception e) { /* already inactive */ }
@@ -90,9 +104,12 @@ public class JpaProductRepository implements ProductRepository {
         jpa.setControlled(product.isControlled());
         jpa.setStorageCondition(product.getStorageCondition());
         jpa.setUnit(product.getUnit());
+        jpa.setImageUrl(product.getImageUrl());
         jpa.setSalePrice(product.getSalePrice() != null ? product.getSalePrice().amount() : java.math.BigDecimal.ZERO);
         jpa.setPurchasePrice(product.getPurchasePrice() != null ? product.getPurchasePrice().amount() : java.math.BigDecimal.ZERO);
         jpa.setActive(product.isActive());
+        jpa.setExpirationDate(product.getExpirationDate());
+        jpa.setManufacturingDate(product.getManufacturingDate());
         return jpa;
     }
 }

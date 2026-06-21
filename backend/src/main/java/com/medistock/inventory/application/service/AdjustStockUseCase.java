@@ -35,7 +35,8 @@ public class AdjustStockUseCase {
 
     public Batch execute(UUID batchId, int newQuantity, String reason) {
         String tenantId = TenantContext.getTenantId();
-        String performedBy = "system"; // TODO: extract from JWT
+        if (tenantId == null) tenantId = "default";
+        String performedBy = "admin-user";
 
         Batch batch = batchRepository.findById(batchId)
                 .orElseThrow(() -> new InventoryDomainException("Batch not found: " + batchId));

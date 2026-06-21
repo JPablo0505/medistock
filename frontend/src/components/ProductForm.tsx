@@ -26,8 +26,11 @@ export interface ProductFormData {
   isControlled: boolean;
   storageCondition: string;
   unit: string;
+  imageUrl: string;
   salePrice: number;
   purchasePrice: number;
+  expirationDate: string;
+  manufacturingDate: string;
 }
 
 interface ProductFormProps {
@@ -49,8 +52,11 @@ const defaultFormData: ProductFormData = {
   isControlled: false,
   storageCondition: "Room temperature",
   unit: "",
+  imageUrl: "",
   salePrice: 0,
   purchasePrice: 0,
+  expirationDate: "",
+  manufacturingDate: "",
 };
 
 // ─── Component ──────────────────────────────────────────────────────────
@@ -73,8 +79,11 @@ export function ProductForm({ product, onSave, isSaving }: ProductFormProps) {
         isControlled: product.isControlled,
         storageCondition: product.storageCondition,
         unit: product.unit,
+        imageUrl: product.imageUrl ?? "",
         salePrice: product.salePrice,
         purchasePrice: product.purchasePrice,
+        expirationDate: product.expirationDate ?? "",
+        manufacturingDate: product.manufacturingDate ?? "",
       });
     }
   }, [product]);
@@ -87,6 +96,10 @@ export function ProductForm({ product, onSave, isSaving }: ProductFormProps) {
       newErrors.salePrice = "Sale price must be 0 or greater";
     if (form.purchasePrice < 0)
       newErrors.purchasePrice = "Purchase price must be 0 or greater";
+    if (!form.expirationDate)
+      newErrors.expirationDate = "Expiration date is required";
+    if (!form.manufacturingDate)
+      newErrors.manufacturingDate = "Manufacturing date is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -261,6 +274,31 @@ export function ProductForm({ product, onSave, isSaving }: ProductFormProps) {
                   ))}
                 </select>
               </div>
+
+              <div className="space-y-2 sm:col-span-2">
+                <label htmlFor="imageUrl" className="text-sm font-medium">
+                  Image URL
+                </label>
+                <Input
+                  id="imageUrl"
+                  value={form.imageUrl}
+                  onChange={(e) => updateField("imageUrl", e.target.value)}
+                  placeholder="https://example.com/product-image.jpg"
+                />
+                {form.imageUrl && (
+                  <div className="mt-2 overflow-hidden rounded-md border">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={form.imageUrl}
+                      alt="Product preview"
+                      className="max-h-48 w-full object-contain"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -321,10 +359,54 @@ export function ProductForm({ product, onSave, isSaving }: ProductFormProps) {
                   </p>
                 )}
               </div>
+          </div>
+        </div>
+
+        {/* Dates */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-medium text-muted-foreground">
+            Dates
+          </h3>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label htmlFor="expirationDate" className="text-sm font-medium">
+                Expiration Date <span className="text-destructive">*</span>
+              </label>
+              <Input
+                id="expirationDate"
+                type="date"
+                value={form.expirationDate}
+                onChange={(e) =>
+                  updateField("expirationDate", e.target.value)
+                }
+                className={errors.expirationDate ? "border-destructive" : ""}
+              />
+              {errors.expirationDate && (
+                <p className="text-xs text-destructive">{errors.expirationDate}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="manufacturingDate" className="text-sm font-medium">
+                Manufacturing Date <span className="text-destructive">*</span>
+              </label>
+              <Input
+                id="manufacturingDate"
+                type="date"
+                value={form.manufacturingDate}
+                onChange={(e) =>
+                  updateField("manufacturingDate", e.target.value)
+                }
+                className={errors.manufacturingDate ? "border-destructive" : ""}
+              />
+              {errors.manufacturingDate && (
+                <p className="text-xs text-destructive">{errors.manufacturingDate}</p>
+              )}
             </div>
           </div>
+        </div>
 
-          {/* Flags */}
+        {/* Flags */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-muted-foreground">
               Flags & Requirements

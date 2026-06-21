@@ -69,7 +69,8 @@ public class BatchAllocator {
     )
     public AllocationResult allocate(UUID productId, int requestedQuantity) {
         String tenantId = TenantContext.getTenantId();
-        String performedBy = "system"; // TODO: extract from JWT
+        if (tenantId == null) tenantId = "default";
+        String performedBy = "admin-user";
 
         // 1. Query available batches in FEFO order (PESSIMISTIC_READ applied at JPA level)
         List<Batch> availableBatches = fefoQuery.findAvailableByProductOrderedByExpiry(productId);

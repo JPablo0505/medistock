@@ -45,6 +45,8 @@ class CreateSaleUseCaseTest {
     private static final UUID PRODUCT_ID = UUID.randomUUID();
     private static final UUID BATCH_ID = UUID.randomUUID();
     private static final String TENANT_ID = "tenant-1";
+    private static final LocalDate EXP = LocalDate.of(2026, 12, 31);
+    private static final LocalDate MFR = LocalDate.of(2025, 1, 1);
 
     @BeforeEach
     void setUp() {
@@ -54,7 +56,7 @@ class CreateSaleUseCaseTest {
     // Scenario 1: Success — BatchAllocator called, event published
     @Test
     void shouldCreateSaleSuccessfully() {
-        Product product = Product.register(TENANT_ID, "Ibuprofeno 400mg", "tableta");
+        Product product = Product.register(TENANT_ID, "Ibuprofeno 400mg", "tableta", EXP, MFR);
         when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
 
         AllocationResult allocResult = AllocationResult.fromLines(PRODUCT_ID, 10,
@@ -82,7 +84,7 @@ class CreateSaleUseCaseTest {
     // Scenario 4: InsufficientStock → propagated
     @Test
     void shouldThrowWhenInsufficientStock() {
-        Product product = Product.register(TENANT_ID, "Test", "unit");
+        Product product = Product.register(TENANT_ID, "Test", "unit", EXP, MFR);
         when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
         when(batchAllocator.allocate(PRODUCT_ID, 100))
                 .thenThrow(new StockShortageException(100, 50));
@@ -111,7 +113,7 @@ class CreateSaleUseCaseTest {
     // Scenario 6: Deactivated product → ProductNotActiveException
     @Test
     void shouldThrowWhenProductDeactivated() {
-        Product product = Product.register(TENANT_ID, "Test", "unit");
+        Product product = Product.register(TENANT_ID, "Test", "unit", EXP, MFR);
         product.deactivate();
         when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
 
@@ -136,7 +138,7 @@ class CreateSaleUseCaseTest {
     @Test
     void shouldRollbackWhenOneProductFails() {
         UUID productId2 = UUID.randomUUID();
-        Product product1 = Product.register(TENANT_ID, "Product A", "unit");
+        Product product1 = Product.register(TENANT_ID, "Product A", "unit", EXP, MFR);
         when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(product1));
 
         AllocationResult allocOk = AllocationResult.fromLines(PRODUCT_ID, 10,

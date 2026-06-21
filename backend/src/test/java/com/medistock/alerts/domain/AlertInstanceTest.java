@@ -13,7 +13,7 @@ class AlertInstanceTest {
     @Test
     void shouldCreateActiveInstance() {
         var instance = new AlertInstance(
-                UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
+                "default", UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
                 AlertSeverity.HIGH, "Test alert");
         assertThat(instance.getStatus()).isEqualTo(AlertInstanceStatus.ACTIVE);
         assertThat(instance.getMessage()).isEqualTo("Test alert");
@@ -23,7 +23,7 @@ class AlertInstanceTest {
     @Test
     void shouldRejectBlankMessage() {
         assertThatThrownBy(() -> new AlertInstance(
-                UUID.randomUUID(), UUID.randomUUID(), null,
+                "default", UUID.randomUUID(), UUID.randomUUID(), null,
                 AlertSeverity.LOW, ""))
                 .isInstanceOf(AlertDomainException.class);
     }
@@ -31,7 +31,7 @@ class AlertInstanceTest {
     @Test
     void shouldRejectNullSeverity() {
         assertThatThrownBy(() -> new AlertInstance(
-                UUID.randomUUID(), UUID.randomUUID(), null,
+                "default", UUID.randomUUID(), UUID.randomUUID(), null,
                 null, "msg"))
                 .isInstanceOf(AlertDomainException.class);
     }
@@ -39,7 +39,7 @@ class AlertInstanceTest {
     @Test
     void shouldAcknowledge() {
         var instance = new AlertInstance(
-                UUID.randomUUID(), UUID.randomUUID(), null,
+                "default", UUID.randomUUID(), UUID.randomUUID(), null,
                 AlertSeverity.MEDIUM, "msg");
         instance.acknowledge();
         assertThat(instance.getStatus()).isEqualTo(AlertInstanceStatus.ACKNOWLEDGED);
@@ -49,7 +49,7 @@ class AlertInstanceTest {
     @Test
     void shouldBeIdempotentOnAcknowledge() {
         var instance = new AlertInstance(
-                UUID.randomUUID(), UUID.randomUUID(), null,
+                "default", UUID.randomUUID(), UUID.randomUUID(), null,
                 AlertSeverity.LOW, "msg");
         instance.acknowledge();
         var ackTime = instance.getAcknowledgedAt();
@@ -60,7 +60,7 @@ class AlertInstanceTest {
     @Test
     void shouldResolve() {
         var instance = new AlertInstance(
-                UUID.randomUUID(), UUID.randomUUID(), null,
+                "default", UUID.randomUUID(), UUID.randomUUID(), null,
                 AlertSeverity.LOW, "msg");
         instance.resolve();
         assertThat(instance.getStatus()).isEqualTo(AlertInstanceStatus.RESOLVED);
@@ -70,7 +70,7 @@ class AlertInstanceTest {
     @Test
     void shouldNotAcknowledgeWhenResolved() {
         var instance = new AlertInstance(
-                UUID.randomUUID(), UUID.randomUUID(), null,
+                "default", UUID.randomUUID(), UUID.randomUUID(), null,
                 AlertSeverity.LOW, "msg");
         instance.resolve();
         assertThatThrownBy(instance::acknowledge)
@@ -80,7 +80,7 @@ class AlertInstanceTest {
     @Test
     void shouldReactivate() {
         var instance = new AlertInstance(
-                UUID.randomUUID(), UUID.randomUUID(), null,
+                "default", UUID.randomUUID(), UUID.randomUUID(), null,
                 AlertSeverity.LOW, "msg");
         instance.acknowledge();
         instance.reactivate();
@@ -92,7 +92,7 @@ class AlertInstanceTest {
     void shouldRestoreFromPersistence() {
         UUID id = UUID.randomUUID();
         var now = java.time.LocalDateTime.now();
-        var instance = AlertInstance.restore(id, UUID.randomUUID(), UUID.randomUUID(),
+        var instance = AlertInstance.restore(id, "default", UUID.randomUUID(), UUID.randomUUID(),
                 UUID.randomUUID(), AlertSeverity.CRITICAL, "msg",
                 AlertInstanceStatus.ACKNOWLEDGED, now, now, now, null);
         assertThat(instance.getId()).isEqualTo(id);

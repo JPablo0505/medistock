@@ -62,8 +62,11 @@ export interface CreateProductInput {
   isControlled?: boolean;
   storageCondition?: string;
   unit: string;
+  imageUrl?: string;
   salePrice?: number;
   purchasePrice?: number;
+  expirationDate: string;
+  manufacturingDate: string;
 }
 
 export type UpdateProductInput = CreateProductInput;

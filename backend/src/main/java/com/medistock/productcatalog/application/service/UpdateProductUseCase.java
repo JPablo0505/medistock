@@ -6,6 +6,7 @@ import com.medistock.productcatalog.domain.port.ProductRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Service
@@ -19,16 +20,19 @@ public class UpdateProductUseCase {
 
     @Transactional
     public ProductDTO execute(UUID id, String name, String genericName, UUID categoryId,
-                              String concentration, String dosageForm, String manufacturer,
-                              boolean requiresPrescription, boolean isControlled,
-                              String storageCondition, String unit,
-                              BigDecimal salePrice, BigDecimal purchasePrice) {
+                               String concentration, String dosageForm, String manufacturer,
+                               boolean requiresPrescription, boolean isControlled,
+                               String storageCondition, String unit,
+                               BigDecimal salePrice, BigDecimal purchasePrice,
+                               String imageUrl,
+                               LocalDate expirationDate, LocalDate manufacturingDate) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException(id));
 
         product.update(name, genericName, categoryId, concentration, dosageForm,
                 manufacturer, requiresPrescription, isControlled, storageCondition,
-                unit, salePrice, purchasePrice);
+                unit, salePrice, purchasePrice, imageUrl,
+                expirationDate, manufacturingDate);
 
         Product saved = productRepository.save(product);
         return toDTO(saved);
@@ -39,10 +43,12 @@ public class UpdateProductUseCase {
                 p.getId(), p.getTenantId(), p.getName(), p.getGenericName(),
                 p.getCategoryId(), p.getConcentration(), p.getDosageForm(),
                 p.getManufacturer(), p.isRequiresPrescription(), p.isControlled(),
-                p.getStorageCondition(), p.getUnit(),
+                p.getStorageCondition(), p.getUnit(), p.getImageUrl(),
                 p.getSalePrice() != null ? p.getSalePrice().amount() : null,
                 p.getPurchasePrice() != null ? p.getPurchasePrice().amount() : null,
-                p.isActive()
+                p.isActive(),
+                p.getExpirationDate(), p.getManufacturingDate(),
+                0
         );
     }
 }

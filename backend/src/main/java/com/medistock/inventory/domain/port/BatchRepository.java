@@ -20,5 +20,7 @@ public interface BatchRepository {
 
     List<Batch> findAllByTenantId(String tenantId);
 
+    List<Batch> findAll();
+
     void delete(Batch batch);
 }

@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,4 +23,13 @@ public interface SpringDataJpaBatchRepository extends JpaRepository<JpaBatch, UU
            "AND b.status = 'ACTIVE' AND b.currentQuantity > 0 " +
            "ORDER BY b.expirationDate ASC, b.currentQuantity ASC")
     List<JpaBatch> findAvailableFefo(@Param("productId") String productId);
+
+    long countByTenantIdAndStatus(String tenantId, String status);
+
+    long countByTenantIdAndStatusAndExpirationDateBetween(
+            String tenantId, String status, LocalDate start, LocalDate end);
+
+    long countByStatus(String status);
+
+    long countByStatusAndExpirationDateBetween(String status, LocalDate start, LocalDate end);
 }

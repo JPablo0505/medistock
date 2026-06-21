@@ -7,6 +7,7 @@ import java.util.UUID;
 
 public interface ProductRepository {
     Optional<Product> findById(UUID id);
+    List<Product> findAll();
     List<Product> findByTenantId(String tenantId);
     List<Product> findByTenantIdAndIsActive(String tenantId, boolean isActive);
     Product save(Product product);

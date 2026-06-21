@@ -55,6 +55,13 @@ public class JpaBatchRepository implements BatchRepository {
     }
 
     @Override
+    public List<Batch> findAll() {
+        return springRepo.findAll().stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
     public void delete(Batch batch) {
         springRepo.deleteById(batch.getId());
     }

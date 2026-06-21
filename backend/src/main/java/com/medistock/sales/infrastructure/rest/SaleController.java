@@ -1,5 +1,6 @@
 package com.medistock.sales.infrastructure.rest;
 
+import com.medistock.crosscutting.security.TenantContext;
 import com.medistock.sales.application.service.CreateSaleCommand;
 import com.medistock.sales.application.service.CreateSaleUseCase;
 import com.medistock.sales.application.service.VoidSaleUseCase;
@@ -37,8 +38,11 @@ public class SaleController {
     @PostMapping
     public ResponseEntity<SaleResponse> createSale(
             @Valid @RequestBody CreateSaleRequest request,
-            @RequestHeader("X-Tenant-Id") String tenantId,
-            @RequestHeader("X-User-Id") String userId) {
+            @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId,
+            @RequestHeader(value = "X-User-Id", required = false) String userId) {
+        if (tenantId == null) tenantId = TenantContext.getTenantId();
+        if (tenantId == null) tenantId = "default";
+        if (userId == null) userId = "admin-user";
 
         List<CreateSaleCommand.CreateSaleItem> items = request.items().stream()
                 .map(i -> new CreateSaleCommand.CreateSaleItem(
@@ -64,10 +68,13 @@ public class SaleController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt:desc") String sort,
-            @RequestHeader("X-Tenant-Id") String tenantId) {
+            @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
+        if (tenantId == null) tenantId = TenantContext.getTenantId();
 
-        List<Sale> sales = saleRepository.findByTenantWithFilters(
-                tenantId, productId, status, dateFrom, dateTo, page, size, sort);
+        List<Sale> sales = tenantId != null
+                ? saleRepository.findByTenantWithFilters(
+                        tenantId, productId, status, dateFrom, dateTo, page, size, sort)
+                : saleRepository.findAll();
         List<SaleSummaryResponse> response = sales.stream()
                 .map(SaleSummaryResponse::from)
                 .toList();

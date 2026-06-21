@@ -92,7 +92,7 @@ class BatchControllerTest {
 
     @Test
     void shouldReceiveBatch() throws Exception {
-        when(receiveStockUseCase.execute(any(), anyString(), anyInt(), any(), any(), any(), any()))
+        when(receiveStockUseCase.execute(any(), anyString(), anyInt(), any(), any(), any(), any(), any()))
                 .thenReturn(sampleBatch);
 
         CreateBatchRequest request = new CreateBatchRequest(

@@ -124,7 +124,7 @@ export default function BatchesPage() {
                   <StatusBadge status={batch.status} />
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Producto: {batch.productId.slice(0, 8)}... &middot;{" "}
+                  Producto: {batch.productName || batch.productId.slice(0, 8) + "..."} &middot;{" "}
                   {batch.currentQuantity} / {batch.initialQuantity}{" "}
                   {batch.currentQuantity === 1 ? "unidad" : "unidades"}
                 </p>

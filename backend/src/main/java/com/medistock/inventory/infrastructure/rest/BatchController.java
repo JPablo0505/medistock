@@ -5,13 +5,14 @@ import com.medistock.inventory.application.service.*;
 import com.medistock.inventory.domain.model.*;
 import com.medistock.inventory.domain.port.BatchRepository;
 import com.medistock.inventory.domain.port.MovementRepository;
+import com.medistock.productcatalog.domain.port.ProductRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/batches")
@@ -25,6 +26,7 @@ public class BatchController {
     private final GetStockSummaryUseCase getStockSummaryUseCase;
     private final BatchRepository batchRepository;
     private final MovementRepository movementRepository;
+    private final ProductRepository productRepository;
 
     public BatchController(ReceiveStockUseCase receiveStockUseCase,
                             AdjustStockUseCase adjustStockUseCase,
@@ -33,7 +35,8 @@ public class BatchController {
                             WriteOffUseCase writeOffUseCase,
                             GetStockSummaryUseCase getStockSummaryUseCase,
                             BatchRepository batchRepository,
-                            MovementRepository movementRepository) {
+                            MovementRepository movementRepository,
+                            ProductRepository productRepository) {
         this.receiveStockUseCase = receiveStockUseCase;
         this.adjustStockUseCase = adjustStockUseCase;
         this.quarantineUseCase = quarantineUseCase;
@@ -42,6 +45,7 @@ public class BatchController {
         this.getStockSummaryUseCase = getStockSummaryUseCase;
         this.batchRepository = batchRepository;
         this.movementRepository = movementRepository;
+        this.productRepository = productRepository;
     }
 
     @PostMapping
@@ -49,17 +53,32 @@ public class BatchController {
         Batch batch = receiveStockUseCase.execute(
                 request.productId(), request.batchCode(), request.quantity(),
                 request.expirationDate(), request.costPerUnit(),
-                request.category(), request.notes());
+                request.manufacturingDate(), request.category(), request.notes());
         return ResponseEntity.status(HttpStatus.CREATED).body(BatchResponse.fromDomain(batch));
     }
 
     @GetMapping
     public ResponseEntity<List<BatchResponse>> list() {
         String tenantId = TenantContext.getTenantId();
-        List<BatchResponse> batches = batchRepository.findAllByTenantId(tenantId).stream()
-                .map(BatchResponse::fromDomain)
+        List<Batch> batches = tenantId != null
+                ? batchRepository.findAllByTenantId(tenantId)
+                : batchRepository.findAll();
+
+        Map<UUID, String> productNames = batches.stream()
+                .map(Batch::getProductId)
+                .distinct()
+                .collect(Collectors.toMap(
+                        pid -> pid,
+                        pid -> productRepository.findById(pid)
+                                .map(p -> p.getName())
+                                .orElse("Unknown"),
+                        (a, b) -> a
+                ));
+
+        List<BatchResponse> response = batches.stream()
+                .map(b -> BatchResponse.fromDomain(b, productNames.getOrDefault(b.getProductId(), "Unknown")))
                 .toList();
-        return ResponseEntity.ok(batches);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
