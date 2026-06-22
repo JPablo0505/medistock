@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
     id 'java'
+    id 'jacoco'
 }
 
 java {
@@ -69,5 +70,13 @@ tasks.named('test', Test) {
         events = ['passed', 'failed', 'skipped']
         showStandardStreams = true
     }
+}
+
+test {
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    dependsOn test
 }
 

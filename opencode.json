@@ -1,0 +1,14 @@
+{
+  "$schema": "https://opencode.ai/schema.json",
+  "mcp": {
+    "sonarcloud": {
+      "command": "node",
+      "args": ["mcp/sonarcloud/index.js"],
+      "env": {
+        "SONAR_TOKEN": "${SONAR_TOKEN}",
+        "SONAR_PROJECT_KEY": "JPablo0505_medistock",
+        "SONAR_ORGANIZATION": "jpablo0505"
+      }
+    }
+  }
+}
