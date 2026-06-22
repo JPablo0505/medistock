@@ -64,6 +64,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
         with:
+          projectBaseDir: backend
           args: >
             -Dsonar.projectKey=JPablo0505_medistock
             -Dsonar.organization=jpablo0505
@@ -113,6 +114,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
         with:
+          projectBaseDir: frontend
           args: >
             -Dsonar.projectKey=JPablo0505_medistock_frontend
             -Dsonar.organization=jpablo0505
