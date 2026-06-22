@@ -3,6 +3,15 @@ plugins {
     alias(libs.plugins.spring.dependency.management)
     id 'java'
     id 'jacoco'
+    id 'org.sonarqube' version '7.3.1.8318'
+}
+
+sonar {
+    properties {
+        property "sonar.projectKey", "JPablo0505_medistock"
+        property "sonar.organization", "jpablo0505"
+        property "sonar.host.url", "https://sonarcloud.io"
+    }
 }
 
 java {
