@@ -82,14 +82,6 @@ const severityConfig: Record<string, { icon: typeof AlertTriangle; color: string
   LOW: { icon: CheckCircle, color: "text-blue-600", bg: "bg-blue-50" },
 };
 
-const batchStatusConfig: Record<string, { label: string; variant: "default" | "destructive" | "secondary" | "outline" }> = {
-  ACTIVE: { label: "Activo", variant: "default" },
-  EXPIRED: { label: "Vencido", variant: "destructive" },
-  QUARANTINED: { label: "Cuarentena", variant: "destructive" },
-  DEPLETED: { label: "Agotado", variant: "secondary" },
-  DISPOSED: { label: "Desechado", variant: "outline" },
-};
-
 function daysUntil(dateStr: string): number {
   const now = new Date();
   const exp = new Date(dateStr);

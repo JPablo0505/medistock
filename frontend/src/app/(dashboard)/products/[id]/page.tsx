@@ -306,7 +306,6 @@ export default function ProductDetailPage() {
                 <div className="space-y-4">
                   {sortedBatches.slice(0, 10).map((batch) => {
                     const cfg = batchStatusConfig[batch.status] ?? batchStatusConfig.ACTIVE;
-                    const StatusIcon = cfg.icon;
                     const days = batch.expirationDate ? daysUntil(batch.expirationDate) : null;
                     return (
                       <div key={batch.id} className="flex items-start gap-3">
