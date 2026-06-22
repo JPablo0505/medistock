@@ -9,6 +9,7 @@ import com.medistock.inventory.domain.model.MovementType;
 import com.medistock.inventory.domain.model.StockProjection;
 import com.medistock.inventory.domain.port.BatchRepository;
 import com.medistock.inventory.domain.port.MovementRepository;
+import com.medistock.productcatalog.domain.port.ProductRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -78,6 +79,9 @@ class BatchControllerTest {
 
     @MockitoBean
     private MovementRepository movementRepository;
+
+    @MockitoBean
+    private ProductRepository productRepository;
 
     private UUID productId;
     private Batch sampleBatch;
