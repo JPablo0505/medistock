@@ -20,8 +20,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
-import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -73,7 +73,7 @@ class ProductControllerTest {
     void shouldListProducts() throws Exception {
         var product = com.medistock.productcatalog.domain.model.Product.register(
                 "test-tenant", "Ibuprofeno", "Tablet",
-                LocalDate.of(2026, 12, 31), LocalDate.of(2025, 1, 1));
+                LocalDate.of(2026, Month.DECEMBER, 31), LocalDate.of(2025, Month.JANUARY, 1));
 
         when(productRepository.findByTenantId(anyString()))
                 .thenReturn(List.of(product));

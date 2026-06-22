@@ -5,6 +5,7 @@ import com.medistock.inventory.application.service.*;
 import com.medistock.inventory.domain.model.*;
 import com.medistock.inventory.domain.port.BatchRepository;
 import com.medistock.inventory.domain.port.MovementRepository;
+import com.medistock.productcatalog.domain.model.Product;
 import com.medistock.productcatalog.domain.port.ProductRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -70,7 +71,7 @@ public class BatchController {
                 .collect(Collectors.toMap(
                         pid -> pid,
                         pid -> productRepository.findById(pid)
-                                .map(p -> p.getName())
+                                .map(Product::getName)
                                 .orElse("Unknown"),
                         (a, b) -> a
                 ));

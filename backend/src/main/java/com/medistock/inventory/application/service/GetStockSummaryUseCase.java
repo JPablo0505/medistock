@@ -39,12 +39,11 @@ public class GetStockSummaryUseCase {
                 case QUARANTINED -> quarantinedQty += batch.getCurrentQuantity();
                 case EXPIRED -> expiredQty += batch.getCurrentQuantity();
                 case DISPOSED -> disposedQty += batch.getCurrentQuantity();
-                case DEPLETED -> {} // no current stock
+                case DEPLETED -> { /* no current stock */ }
             }
-            if (batch.getStatus() == BatchStatus.ACTIVE && batch.getCurrentQuantity() > 0) {
-                if (nearestExpiry == null || batch.getExpirationDate().isBefore(nearestExpiry)) {
-                    nearestExpiry = batch.getExpirationDate();
-                }
+            if (batch.getStatus() == BatchStatus.ACTIVE && batch.getCurrentQuantity() > 0
+                    && (nearestExpiry == null || batch.getExpirationDate().isBefore(nearestExpiry))) {
+                nearestExpiry = batch.getExpirationDate();
             }
         }
 

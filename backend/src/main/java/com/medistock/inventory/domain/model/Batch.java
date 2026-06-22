@@ -190,7 +190,7 @@ public class Batch implements AggregateRoot {
     /**
      * Adjust available stock level.
      */
-    public void adjustQuantity(int newQuantity, String reason) {
+    public void adjustQuantity(int newQuantity) {
         if (status == BatchStatus.DISPOSED || status == BatchStatus.DEPLETED) {
             throw new InventoryDomainException("Cannot adjust a " + status + " batch");
         }

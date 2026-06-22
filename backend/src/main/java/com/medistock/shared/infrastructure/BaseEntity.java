@@ -1,6 +1,7 @@
 package com.medistock.shared.infrastructure;
 
 import jakarta.persistence.*;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -35,13 +36,13 @@ public abstract class BaseEntity {
         if (id == null) {
             id = UUID.randomUUID();
         }
-        createdAt = LocalDateTime.now();
+        createdAt = LocalDateTime.now(Clock.systemDefaultZone());
         updatedAt = createdAt;
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now(Clock.systemDefaultZone());
     }
 
     // --- Getters ---

@@ -44,7 +44,7 @@ public class JpaMovementRepository implements MovementRepository {
     // --- Mapping ---
 
     private Movement toDomain(JpaMovement jpa) {
-        return Movement.record(
+        return Movement.create(
                 jpa.getTenantId(),
                 UUID.fromString(jpa.getBatchId()),
                 UUID.fromString(jpa.getProductId()),

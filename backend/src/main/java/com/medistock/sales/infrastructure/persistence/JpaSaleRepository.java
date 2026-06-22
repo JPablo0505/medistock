@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Repository
 public class JpaSaleRepository implements SaleRepository {
@@ -123,7 +122,7 @@ public class JpaSaleRepository implements SaleRepository {
 
         List<JpaSaleItemEntity> itemEntities = domain.getItems().stream()
                 .map(item -> toItemEntity(item, entity))
-                .collect(Collectors.toList());
+                .toList();
         entity.setItems(itemEntities);
 
         return entity;
@@ -143,7 +142,7 @@ public class JpaSaleRepository implements SaleRepository {
 
         List<JpaBatchAllocationEntity> allocEntities = domain.getBatchAllocations().stream()
                 .map(alloc -> toAllocationEntity(alloc, entity))
-                .collect(Collectors.toList());
+                .toList();
         entity.setBatchAllocations(allocEntities);
 
         return entity;

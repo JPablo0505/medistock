@@ -44,7 +44,7 @@ public class WriteOffUseCase {
         int previousQuantity = batch.getCurrentQuantity();
         batch.dispose();
 
-        Movement movement = Movement.record(tenantId, batchId, batch.getProductId(),
+        Movement movement = Movement.create(tenantId, batchId, batch.getProductId(),
                 MovementType.WRITE_OFF, -previousQuantity, previousQuantity, 0,
                 reason, performedBy);
         movementRepository.save(movement);

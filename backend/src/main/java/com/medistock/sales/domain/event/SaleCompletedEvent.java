@@ -2,6 +2,7 @@ package com.medistock.sales.domain.event;
 
 import com.medistock.shared.domain.DomainEvent;
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -13,6 +14,6 @@ public record SaleCompletedEvent(
         LocalDateTime timestamp
 ) implements DomainEvent {
     public SaleCompletedEvent(UUID saleId, String tenantId, BigDecimal total, String performedBy) {
-        this(saleId, tenantId, total, performedBy, LocalDateTime.now());
+        this(saleId, tenantId, total, performedBy, LocalDateTime.now(Clock.systemDefaultZone()));
     }
 }

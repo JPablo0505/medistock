@@ -4,6 +4,7 @@ import com.medistock.sales.domain.exception.SaleAlreadyVoidedException;
 import com.medistock.sales.domain.exception.SaleDomainException;
 import com.medistock.shared.domain.AggregateRoot;
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -46,7 +47,7 @@ public class Sale implements AggregateRoot {
     }
 
     public static Sale create(String tenantId, String performedBy, List<SaleItem> items) {
-        return create(tenantId, performedBy, items, LocalDateTime.now());
+        return create(tenantId, performedBy, items, LocalDateTime.now(Clock.systemDefaultZone()));
     }
 
     public static Sale create(String tenantId, String performedBy, List<SaleItem> items, LocalDateTime saleDate) {
@@ -86,8 +87,8 @@ public class Sale implements AggregateRoot {
                 SaleStatus.COMPLETED,
                 null,
                 null,
-                LocalDateTime.now(),
-                LocalDateTime.now()
+                LocalDateTime.now(Clock.systemDefaultZone()),
+                LocalDateTime.now(Clock.systemDefaultZone())
         );
     }
 
@@ -110,9 +111,9 @@ public class Sale implements AggregateRoot {
             throw new SaleDomainException("voidReason must not be blank");
         }
         this.status = SaleStatus.VOIDED;
-        this.voidedAt = LocalDateTime.now();
+        this.voidedAt = LocalDateTime.now(Clock.systemDefaultZone());
         this.voidReason = reason;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now(Clock.systemDefaultZone());
     }
 
     // Getters

@@ -23,6 +23,7 @@ import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -53,7 +54,7 @@ class VoidSaleUseCaseTest {
         useCase = new VoidSaleUseCase(saleRepository, batchRepository, movementRepository, eventPublisher);
 
         BatchAllocation alloc = new BatchAllocation(BATCH_ID, "LOT-001",
-                LocalDate.of(2027, 6, 1), 10, BigDecimal.valueOf(5.00));
+                LocalDate.of(2027, Month.JUNE, 1), 10, BigDecimal.valueOf(5.00));
         SaleItem item = new SaleItem(PRODUCT_ID, "Ibuprofeno", "IBU-400",
                 10, BigDecimal.valueOf(15.50), List.of(alloc));
         completedSale = Sale.create(TENANT_ID, "user-1", List.of(item));
@@ -65,7 +66,7 @@ class VoidSaleUseCaseTest {
         when(saleRepository.findById(SALE_ID)).thenReturn(Optional.of(completedSale));
 
         Batch batch = Batch.receive(TENANT_ID, PRODUCT_ID, "LOT-001", 50,
-                LocalDate.of(2027, 6, 18), BigDecimal.valueOf(5.00));
+                LocalDate.of(2027, Month.JUNE, 18), BigDecimal.valueOf(5.00));
         batch.allocate(10); // simulate 10 already allocated
         when(batchRepository.findById(BATCH_ID)).thenReturn(Optional.of(batch));
         when(saleRepository.save(any())).thenAnswer(i -> i.getArgument(0));

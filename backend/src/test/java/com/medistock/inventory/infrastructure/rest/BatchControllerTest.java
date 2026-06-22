@@ -26,6 +26,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -91,7 +92,7 @@ class BatchControllerTest {
         TenantContext.setTenantId("test-tenant");
         productId = UUID.randomUUID();
         sampleBatch = Batch.receive("test-tenant", productId, "BATCH-001",
-                100, LocalDate.of(2027, 6, 18), BigDecimal.valueOf(15.50));
+                100, LocalDate.of(2027, Month.JUNE, 18), BigDecimal.valueOf(15.50));
     }
 
     @Test
@@ -101,7 +102,7 @@ class BatchControllerTest {
 
         CreateBatchRequest request = new CreateBatchRequest(
                 productId, "BATCH-001", 100,
-                LocalDate.of(2027, 6, 18), null,
+                LocalDate.of(2027, Month.JUNE, 18), null,
                 BigDecimal.valueOf(15.50), null, null);
 
         mockMvc.perform(post("/api/v1/batches")
@@ -207,7 +208,7 @@ class BatchControllerTest {
     void shouldGetStockSummary() throws Exception {
         StockProjection projection = new StockProjection(
                 productId, 100, 100, 0, 0, 0, 1,
-                LocalDate.of(2027, 6, 18));
+                LocalDate.of(2027, Month.JUNE, 18));
         when(getStockSummaryUseCase.execute(productId))
                 .thenReturn(projection);
 

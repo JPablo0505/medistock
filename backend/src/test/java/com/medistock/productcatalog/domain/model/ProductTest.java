@@ -4,13 +4,14 @@ import com.medistock.shared.domain.AggregateRoot;
 import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ProductTest {
 
-    private static final LocalDate EXP = LocalDate.of(2026, 12, 31);
-    private static final LocalDate MFR = LocalDate.of(2025, 1, 1);
+    private static final LocalDate EXP = LocalDate.of(2026, Month.DECEMBER, 31);
+    private static final LocalDate MFR = LocalDate.of(2025, Month.JANUARY, 1);
 
     @Test
     void shouldRegisterProduct() {

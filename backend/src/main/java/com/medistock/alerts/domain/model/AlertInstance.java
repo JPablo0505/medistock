@@ -2,6 +2,7 @@ package com.medistock.alerts.domain.model;
 
 import com.medistock.alerts.domain.exception.AlertDomainException;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -27,7 +28,7 @@ public class AlertInstance {
         this.alertRuleId = alertRuleId;
         this.productId = productId;
         this.batchId = batchId;
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now(Clock.systemDefaultZone());
         this.updatedAt = this.createdAt;
         setSeverity(severity);
         setMessage(message);
@@ -35,6 +36,7 @@ public class AlertInstance {
     }
 
     // Restore constructor for persistence reconstruction
+    @SuppressWarnings("java:S107")
     private AlertInstance(UUID id, String tenantId, UUID alertRuleId, UUID productId, UUID batchId,
                           AlertSeverity severity, String message,
                           AlertInstanceStatus status, LocalDateTime createdAt,
@@ -54,6 +56,7 @@ public class AlertInstance {
         this.resolvedAt = resolvedAt;
     }
 
+    @SuppressWarnings("java:S107")
     public static AlertInstance restore(UUID id, String tenantId, UUID alertRuleId, UUID productId,
                                          UUID batchId, AlertSeverity severity,
                                          String message, AlertInstanceStatus status,
@@ -97,21 +100,21 @@ public class AlertInstance {
             throw new AlertDomainException("Cannot acknowledge a resolved alert");
         if (status == AlertInstanceStatus.ACKNOWLEDGED) return;
         this.status = AlertInstanceStatus.ACKNOWLEDGED;
-        this.acknowledgedAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        this.acknowledgedAt = LocalDateTime.now(Clock.systemDefaultZone());
+        this.updatedAt = LocalDateTime.now(Clock.systemDefaultZone());
     }
 
     public void resolve() {
         if (status == AlertInstanceStatus.RESOLVED) return;
         this.status = AlertInstanceStatus.RESOLVED;
-        this.resolvedAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        this.resolvedAt = LocalDateTime.now(Clock.systemDefaultZone());
+        this.updatedAt = LocalDateTime.now(Clock.systemDefaultZone());
     }
 
     public void reactivate() {
         this.status = AlertInstanceStatus.ACTIVE;
         this.acknowledgedAt = null;
         this.resolvedAt = null;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now(Clock.systemDefaultZone());
     }
 }

@@ -3,6 +3,7 @@ package com.medistock.inventory.domain.model;
 import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -11,7 +12,7 @@ class BatchTest {
 
     private static final String TENANT = "tenant-1";
     private static final UUID PRODUCT_ID = UUID.randomUUID();
-    private static final LocalDate EXPIRY = LocalDate.of(2027, 6, 18);
+    private static final LocalDate EXPIRY = LocalDate.of(2027, Month.JUNE, 18);
 
     private Batch createValidBatch() {
         return Batch.receive(TENANT, PRODUCT_ID, "BATCH-001", 100,
@@ -167,14 +168,14 @@ class BatchTest {
     @Test
     void shouldAdjustQuantity() {
         Batch batch = createValidBatch();
-        batch.adjustQuantity(80, "Found damage - reduced");
+        batch.adjustQuantity(80);
         assertEquals(80, batch.getCurrentQuantity());
     }
 
     @Test
     void shouldDepleteOnAdjustToZero() {
         Batch batch = createValidBatch();
-        batch.adjustQuantity(0, "Complete loss");
+        batch.adjustQuantity(0);
         assertEquals(0, batch.getCurrentQuantity());
         assertEquals(BatchStatus.DEPLETED, batch.getStatus());
     }
@@ -183,7 +184,7 @@ class BatchTest {
     void shouldThrowWhenAdjustNegative() {
         Batch batch = createValidBatch();
         assertThrows(InventoryDomainException.class, () ->
-                batch.adjustQuantity(-1, "negative"));
+                batch.adjustQuantity(-1));
     }
 
     @Test
@@ -191,14 +192,14 @@ class BatchTest {
         Batch batch = createValidBatch();
         batch.dispose();
         assertThrows(InventoryDomainException.class, () ->
-                batch.adjustQuantity(50, "adjust"));
+                batch.adjustQuantity(50));
     }
 
     @Test
     void shouldThrowWhenAdjustExceedsInitialQuantity() {
         Batch batch = createValidBatch();
         assertThrows(InventoryDomainException.class, () ->
-                batch.adjustQuantity(101, "over max"));
+                batch.adjustQuantity(101));
     }
 
     @Test

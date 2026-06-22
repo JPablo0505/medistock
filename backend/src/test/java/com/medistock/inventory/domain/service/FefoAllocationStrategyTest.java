@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,9 +15,9 @@ class FefoAllocationStrategyTest {
 
     private static final String TENANT = "tenant-1";
     private static final UUID PRODUCT_ID = UUID.randomUUID();
-    private static final LocalDate EXPIRY_2027 = LocalDate.of(2027, 6, 18);
-    private static final LocalDate EXPIRY_2028 = LocalDate.of(2028, 6, 18);
-    private static final LocalDate EXPIRY_2026 = LocalDate.of(2026, 12, 1);
+    private static final LocalDate EXPIRY_2027 = LocalDate.of(2027, Month.JUNE, 18);
+    private static final LocalDate EXPIRY_2028 = LocalDate.of(2028, Month.JUNE, 18);
+    private static final LocalDate EXPIRY_2026 = LocalDate.of(2026, Month.DECEMBER, 1);
 
     private final FefoAllocationStrategy strategy = new FefoAllocationStrategy();
 

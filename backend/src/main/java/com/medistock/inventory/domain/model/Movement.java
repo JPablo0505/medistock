@@ -1,5 +1,6 @@
 package com.medistock.inventory.domain.model;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
@@ -35,13 +36,13 @@ public class Movement {
         this.newQuantity = newQuantity;
         this.reason = reason;
         this.performedBy = performedBy;
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now(Clock.systemDefaultZone());
     }
 
     /**
      * Factory method for creating a new movement.
      */
-    public static Movement record(String tenantId, UUID batchId, UUID productId,
+    public static Movement create(String tenantId, UUID batchId, UUID productId,
                                     MovementType type, int quantity,
                                     int previousQuantity, int newQuantity,
                                     String reason, String performedBy) {

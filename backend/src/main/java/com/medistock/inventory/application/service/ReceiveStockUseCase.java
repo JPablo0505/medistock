@@ -49,7 +49,7 @@ public class ReceiveStockUseCase {
 
         Batch saved = batchRepository.save(batch);
 
-        Movement movement = Movement.record(tenantId, saved.getId(), productId,
+        Movement movement = Movement.create(tenantId, saved.getId(), productId,
                 MovementType.RECEIPT, quantity, 0, quantity,
                 "Initial receipt: " + batchCode, performedBy);
         movementRepository.save(movement);

@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -61,7 +62,7 @@ class SaleControllerTest {
     @Test
     void shouldCreateSale() throws Exception {
         BatchAllocation alloc = new BatchAllocation(BATCH_ID, "LOT-001",
-                LocalDate.of(2027, 6, 1), 10, BigDecimal.valueOf(5.00));
+                LocalDate.of(2027, Month.JUNE, 1), 10, BigDecimal.valueOf(5.00));
         SaleItem item = new SaleItem(PRODUCT_ID, "Ibuprofeno", "IBU-400",
                 10, BigDecimal.valueOf(15.50), List.of(alloc));
         Sale sale = Sale.create("tenant-1", "user-1", List.of(item));
@@ -97,7 +98,7 @@ class SaleControllerTest {
     void shouldGetSaleById() throws Exception {
         UUID saleId = UUID.randomUUID();
         BatchAllocation alloc = new BatchAllocation(BATCH_ID, "LOT-001",
-                LocalDate.of(2027, 6, 1), 10, BigDecimal.valueOf(5.00));
+                LocalDate.of(2027, Month.JUNE, 1), 10, BigDecimal.valueOf(5.00));
         SaleItem item = new SaleItem(PRODUCT_ID, "Ibuprofeno", "IBU-400",
                 10, BigDecimal.valueOf(15.50), List.of(alloc));
         Sale sale = Sale.create("tenant-1", "user-1", List.of(item));
@@ -124,7 +125,7 @@ class SaleControllerTest {
     void shouldVoidSale() throws Exception {
         UUID saleId = UUID.randomUUID();
         BatchAllocation alloc = new BatchAllocation(BATCH_ID, "LOT-001",
-                LocalDate.of(2027, 6, 1), 10, BigDecimal.valueOf(5.00));
+                LocalDate.of(2027, Month.JUNE, 1), 10, BigDecimal.valueOf(5.00));
         SaleItem item = new SaleItem(PRODUCT_ID, "Ibuprofeno", "IBU-400",
                 10, BigDecimal.valueOf(15.50), List.of(alloc));
         Sale sale = Sale.create("tenant-1", "user-1", List.of(item));

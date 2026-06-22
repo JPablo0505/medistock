@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,7 +22,7 @@ class SaleTest {
     private static final UUID BATCH_ID = UUID.randomUUID();
 
     private BatchAllocation sampleAllocation() {
-        return new BatchAllocation(BATCH_ID, "LOT-001", LocalDate.of(2027, 6, 1), 10, BigDecimal.valueOf(5.00));
+        return new BatchAllocation(BATCH_ID, "LOT-001", LocalDate.of(2027, Month.JUNE, 1), 10, BigDecimal.valueOf(5.00));
     }
 
     private SaleItem sampleItem() {
@@ -58,8 +59,8 @@ class SaleTest {
     // SAL-R11: Total = sum of items
     @Test
     void totalShouldEqualSumOfItemTotals() {
-        BatchAllocation alloc1 = new BatchAllocation(UUID.randomUUID(), "LOT-001", LocalDate.of(2027, 6, 1), 5, BigDecimal.valueOf(5.00));
-        BatchAllocation alloc2 = new BatchAllocation(UUID.randomUUID(), "LOT-002", LocalDate.of(2027, 7, 1), 3, BigDecimal.valueOf(5.00));
+        BatchAllocation alloc1 = new BatchAllocation(UUID.randomUUID(), "LOT-001", LocalDate.of(2027, Month.JUNE, 1), 5, BigDecimal.valueOf(5.00));
+        BatchAllocation alloc2 = new BatchAllocation(UUID.randomUUID(), "LOT-002", LocalDate.of(2027, Month.JULY, 1), 3, BigDecimal.valueOf(5.00));
 
         SaleItem item1 = new SaleItem(PRODUCT_ID, "Ibuprofeno 400mg", "IBU-400", 5, BigDecimal.valueOf(15.50),
                 List.of(alloc1));
@@ -74,7 +75,7 @@ class SaleTest {
     // SAL-R07: Sum of batch allocations must equal item quantity
     @Test
     void shouldThrowWhenAllocationSumMismatchesQuantity() {
-        BatchAllocation alloc = new BatchAllocation(BATCH_ID, "LOT-001", LocalDate.of(2027, 6, 1), 5, BigDecimal.valueOf(5.00));
+        BatchAllocation alloc = new BatchAllocation(BATCH_ID, "LOT-001", LocalDate.of(2027, Month.JUNE, 1), 5, BigDecimal.valueOf(5.00));
         SaleItem item = new SaleItem(PRODUCT_ID, "Test", "TST", 10, BigDecimal.TEN, List.of(alloc));
 
         // The item was created with 10 quantity but only 5 allocated
@@ -123,8 +124,8 @@ class SaleTest {
     // SAL-R07: Multi-batch allocation sum = item quantity
     @Test
     void shouldHandleMultiBatchAllocation() {
-        BatchAllocation alloc1 = new BatchAllocation(UUID.randomUUID(), "LOT-A", LocalDate.of(2027, 6, 1), 30, BigDecimal.valueOf(5.00));
-        BatchAllocation alloc2 = new BatchAllocation(UUID.randomUUID(), "LOT-B", LocalDate.of(2027, 7, 1), 30, BigDecimal.valueOf(6.00));
+        BatchAllocation alloc1 = new BatchAllocation(UUID.randomUUID(), "LOT-A", LocalDate.of(2027, Month.JUNE, 1), 30, BigDecimal.valueOf(5.00));
+        BatchAllocation alloc2 = new BatchAllocation(UUID.randomUUID(), "LOT-B", LocalDate.of(2027, Month.JULY, 1), 30, BigDecimal.valueOf(6.00));
         SaleItem item = new SaleItem(PRODUCT_ID, "Test", "TST", 60, BigDecimal.TEN, List.of(alloc1, alloc2));
         Sale sale = Sale.create("tenant-1", "user-1", List.of(item));
         assertEquals(60, item.getAllocatedQuantitySum());

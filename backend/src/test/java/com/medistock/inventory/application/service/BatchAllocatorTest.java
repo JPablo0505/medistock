@@ -12,11 +12,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.OptimisticLockingFailureException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,7 +33,6 @@ class BatchAllocatorTest {
     @Mock private FefoQuerySpecification fefoQuery;
     @Mock private BatchRepository batchRepository;
     @Mock private MovementRepository movementRepository;
-    @Mock private ApplicationEventPublisher eventPublisher;
     @Captor private ArgumentCaptor<Movement> movementCaptor;
 
     private BatchAllocator allocator;
@@ -43,12 +42,12 @@ class BatchAllocatorTest {
     @BeforeEach
     void setUp() {
         TenantContext.setTenantId(TENANT);
-        allocator = new BatchAllocator(fefoQuery, batchRepository, movementRepository, eventPublisher);
+        allocator = new BatchAllocator(fefoQuery, batchRepository, movementRepository);
 
         batch1 = Batch.receive(TENANT, PRODUCT_ID, "BATCH-001", 50,
-                LocalDate.of(2027, 6, 18), BigDecimal.valueOf(10));
+                LocalDate.of(2027, Month.JUNE, 18), BigDecimal.valueOf(10));
         batch2 = Batch.receive(TENANT, PRODUCT_ID, "BATCH-002", 100,
-                LocalDate.of(2028, 6, 18), BigDecimal.valueOf(12));
+                LocalDate.of(2028, Month.JUNE, 18), BigDecimal.valueOf(12));
     }
 
     @Test

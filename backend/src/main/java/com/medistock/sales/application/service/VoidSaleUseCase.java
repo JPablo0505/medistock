@@ -63,7 +63,7 @@ public class VoidSaleUseCase {
                 batchRepository.save(batch);
 
                 // Create RETURN movement
-                Movement returnMovement = Movement.record(
+                Movement returnMovement = Movement.create(
                         sale.getTenantId(),
                         alloc.batchId(),
                         item.getProductId(),

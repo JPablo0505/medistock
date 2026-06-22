@@ -14,7 +14,7 @@ class MovementTest {
 
     @Test
     void shouldCreateValidMovement() {
-        Movement movement = Movement.record(TENANT, BATCH_ID, PRODUCT_ID,
+        Movement movement = Movement.create(TENANT, BATCH_ID, PRODUCT_ID,
                 MovementType.RECEIPT, 100, 0, 100,
                 "Initial receipt", "user-1");
 
@@ -34,41 +34,41 @@ class MovementTest {
     @Test
     void shouldThrowWhenTenantIsBlank() {
         assertThrows(InventoryDomainException.class, () ->
-                Movement.record("", BATCH_ID, PRODUCT_ID, MovementType.RECEIPT,
+                Movement.create("", BATCH_ID, PRODUCT_ID, MovementType.RECEIPT,
                         100, 0, 100, "test", "user"));
     }
 
     @Test
     void shouldThrowWhenBatchIdIsNull() {
         assertThrows(InventoryDomainException.class, () ->
-                Movement.record(TENANT, null, PRODUCT_ID, MovementType.RECEIPT,
+                Movement.create(TENANT, null, PRODUCT_ID, MovementType.RECEIPT,
                         100, 0, 100, "test", "user"));
     }
 
     @Test
     void shouldThrowWhenProductIdIsNull() {
         assertThrows(InventoryDomainException.class, () ->
-                Movement.record(TENANT, BATCH_ID, null, MovementType.RECEIPT,
+                Movement.create(TENANT, BATCH_ID, null, MovementType.RECEIPT,
                         100, 0, 100, "test", "user"));
     }
 
     @Test
     void shouldThrowWhenTypeIsNull() {
         assertThrows(InventoryDomainException.class, () ->
-                Movement.record(TENANT, BATCH_ID, PRODUCT_ID, null,
+                Movement.create(TENANT, BATCH_ID, PRODUCT_ID, null,
                         100, 0, 100, "test", "user"));
     }
 
     @Test
     void shouldThrowWhenQuantityIsZeroAndStockChanges() {
         assertThrows(InventoryDomainException.class, () ->
-                Movement.record(TENANT, BATCH_ID, PRODUCT_ID, MovementType.ADJUSTMENT,
+                Movement.create(TENANT, BATCH_ID, PRODUCT_ID, MovementType.ADJUSTMENT,
                         0, 100, 80, "test", "user"));
     }
 
     @Test
     void shouldAllowZeroQuantityForStatusChange() {
-        Movement movement = Movement.record(TENANT, BATCH_ID, PRODUCT_ID,
+        Movement movement = Movement.create(TENANT, BATCH_ID, PRODUCT_ID,
                 MovementType.QUARANTINE_IN, 0, 100, 100,
                 "Quarantined", "user-1");
         assertEquals(0, movement.getQuantity());
@@ -79,31 +79,24 @@ class MovementTest {
     @Test
     void shouldThrowWhenQuantitiesAreInconsistent() {
         assertThrows(InventoryDomainException.class, () ->
-                Movement.record(TENANT, BATCH_ID, PRODUCT_ID, MovementType.ADJUSTMENT,
+                Movement.create(TENANT, BATCH_ID, PRODUCT_ID, MovementType.ADJUSTMENT,
                         -10, 100, 100, "test", "user"));
         // -10 + 100 != 100
     }
 
     @Test
     void shouldBeImmutable() {
-        Movement movement = Movement.record(TENANT, BATCH_ID, PRODUCT_ID,
+        Movement movement = Movement.create(TENANT, BATCH_ID, PRODUCT_ID,
                 MovementType.RECEIPT, 100, 0, 100,
                 "Initial receipt", "user-1");
 
-        assertThrows(UnsupportedOperationException.class, () -> {
-            // Verify there are no setters by checking class methods
-            try {
-                var setter = movement.getClass().getMethod("setQuantity", int.class);
-                fail("setQuantity method should not exist");
-            } catch (NoSuchMethodException e) {
-                throw new UnsupportedOperationException("No setters");
-            }
-        }, UnsupportedOperationException.class.getName());
+        assertThrows(NoSuchMethodException.class, () ->
+                movement.getClass().getMethod("setQuantity", int.class));
     }
 
     @Test
     void shouldCreateMovementWithNegativeQuantityForReduction() {
-        Movement movement = Movement.record(TENANT, BATCH_ID, PRODUCT_ID,
+        Movement movement = Movement.create(TENANT, BATCH_ID, PRODUCT_ID,
                 MovementType.ADJUSTMENT, -20, 100, 80,
                 "Stock reduction", "user-1");
         assertEquals(-20, movement.getQuantity());

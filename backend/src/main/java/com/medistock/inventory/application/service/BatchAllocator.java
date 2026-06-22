@@ -8,7 +8,6 @@ import com.medistock.inventory.domain.port.MovementRepository;
 import com.medistock.crosscutting.security.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
@@ -37,17 +36,14 @@ public class BatchAllocator {
     private final BatchRepository batchRepository;
     private final MovementRepository movementRepository;
     private final FefoAllocationStrategy allocationStrategy;
-    private final ApplicationEventPublisher eventPublisher;
 
     public BatchAllocator(FefoQuerySpecification fefoQuery,
                            BatchRepository batchRepository,
-                           MovementRepository movementRepository,
-                           ApplicationEventPublisher eventPublisher) {
+                           MovementRepository movementRepository) {
         this.fefoQuery = fefoQuery;
         this.batchRepository = batchRepository;
         this.movementRepository = movementRepository;
         this.allocationStrategy = new FefoAllocationStrategy();
-        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -92,7 +88,7 @@ public class BatchAllocator {
 
             batchRepository.save(modified);
 
-            Movement movement = Movement.record(
+            Movement movement = Movement.create(
                     tenantId,
                     modified.getId(),
                     productId,

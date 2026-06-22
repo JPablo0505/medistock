@@ -26,9 +26,10 @@ public class SecurityConfig {
     }
 
     @Bean
+    @SuppressWarnings("java:S4502")
     public SecurityFilterChain filterChain(final HttpSecurity http) throws Exception {
         return http
-                .csrf(csrf -> csrf.disable()) // DISABLED: Stateless API using JWT — no session cookie to steal; JWT bearer tokens provide inherent CSRF protection
+                .csrf(csrf -> csrf.disable()) // NOSONAR — Stateless JWT API, no session cookie to steal; CSRF protection is inherent in bearer tokens
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/**").permitAll()

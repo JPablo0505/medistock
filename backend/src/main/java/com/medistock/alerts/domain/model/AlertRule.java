@@ -3,6 +3,7 @@ package com.medistock.alerts.domain.model;
 import com.medistock.alerts.domain.exception.InvalidAlertRuleException;
 import com.medistock.shared.domain.AggregateRoot;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
@@ -29,7 +30,7 @@ public class AlertRule implements AggregateRoot {
         this.id = UUID.randomUUID();
         this.tenantId = tenantId;
         this.isActive = true;
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now(Clock.systemDefaultZone());
         this.updatedAt = this.createdAt;
         setName(name);
         setDescription(description);
@@ -73,33 +74,33 @@ public class AlertRule implements AggregateRoot {
 
     // --- Behaviour ---
 
-    public void activate() { this.isActive = true; updatedAt = LocalDateTime.now(); }
-    public void deactivate() { this.isActive = false; updatedAt = LocalDateTime.now(); }
+    public void activate() { this.isActive = true; updatedAt = LocalDateTime.now(Clock.systemDefaultZone()); }
+    public void deactivate() { this.isActive = false; updatedAt = LocalDateTime.now(Clock.systemDefaultZone()); }
 
     public void setName(String name) {
         if (name == null || name.isBlank())
             throw new InvalidAlertRuleException("Alert rule name must not be blank");
         this.name = name.trim();
-        updatedAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now(Clock.systemDefaultZone());
     }
 
     public void setDescription(String description) {
         this.description = description;
-        updatedAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now(Clock.systemDefaultZone());
     }
 
     public void setType(AlertRuleType type) {
         if (type == null)
             throw new InvalidAlertRuleException("Alert rule type must not be null");
         this.type = type;
-        updatedAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now(Clock.systemDefaultZone());
     }
 
     public void setConfig(Map<String, Object> config) {
         if (config == null || config.isEmpty())
             throw new InvalidAlertRuleException("Alert rule config must not be null or empty");
         this.config = Map.copyOf(config);
-        updatedAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now(Clock.systemDefaultZone());
     }
 
     public int getExpirationDays() {

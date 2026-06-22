@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.WebRequest;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -132,7 +133,7 @@ public class GlobalExceptionHandler {
     ) {
         public ErrorResponse(int status, String code, String message,
                              List<ErrorDetail> errors, String correlationId) {
-            this(status, code, message, errors, correlationId, LocalDateTime.now());
+            this(status, code, message, errors, correlationId, LocalDateTime.now(Clock.systemDefaultZone()));
         }
     }
 

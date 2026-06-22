@@ -44,7 +44,7 @@ public class QuarantineUseCase {
         int previousQuantity = batch.getCurrentQuantity();
         batch.quarantine();
 
-        Movement movement = Movement.record(tenantId, batchId, batch.getProductId(),
+        Movement movement = Movement.create(tenantId, batchId, batch.getProductId(),
                 MovementType.QUARANTINE_IN, 0, previousQuantity, previousQuantity,
                 reason, performedBy);
         movementRepository.save(movement);

@@ -8,6 +8,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 
+import com.medistock.alerts.domain.model.AlertSeverity;
+
 class AlertInstanceTest {
 
     @Test
@@ -22,18 +24,21 @@ class AlertInstanceTest {
 
     @Test
     void shouldRejectBlankMessage() {
-        assertThatThrownBy(() -> new AlertInstance(
-                "default", UUID.randomUUID(), UUID.randomUUID(), null,
+        assertThatThrownBy(() -> createInvalid("default", UUID.randomUUID(), UUID.randomUUID(), null,
                 AlertSeverity.LOW, ""))
                 .isInstanceOf(AlertDomainException.class);
     }
 
     @Test
     void shouldRejectNullSeverity() {
-        assertThatThrownBy(() -> new AlertInstance(
-                "default", UUID.randomUUID(), UUID.randomUUID(), null,
+        assertThatThrownBy(() -> createInvalid("default", UUID.randomUUID(), UUID.randomUUID(), null,
                 null, "msg"))
                 .isInstanceOf(AlertDomainException.class);
+    }
+
+    private AlertInstance createInvalid(String tenantId, UUID ruleId, UUID productId, UUID batchId,
+                                         AlertSeverity severity, String message) {
+        return new AlertInstance(tenantId, ruleId, productId, batchId, severity, message);
     }
 
     @Test
