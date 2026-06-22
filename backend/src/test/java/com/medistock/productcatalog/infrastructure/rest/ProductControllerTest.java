@@ -1,6 +1,7 @@
 package com.medistock.productcatalog.infrastructure.rest;
 
 import com.medistock.crosscutting.security.TenantContext;
+import com.medistock.inventory.domain.port.BatchRepository;
 import com.medistock.productcatalog.application.service.RegisterProductUseCase;
 import com.medistock.productcatalog.application.service.UpdateProductUseCase;
 import com.medistock.productcatalog.application.service.DeactivateProductUseCase;
@@ -59,6 +60,9 @@ class ProductControllerTest {
 
     @MockitoBean
     private ProductRepository productRepository;
+
+    @MockitoBean
+    private BatchRepository batchRepository;
 
     @BeforeEach
     void setUp() {

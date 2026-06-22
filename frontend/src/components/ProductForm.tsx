@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -63,30 +63,31 @@ const defaultFormData: ProductFormData = {
 
 export function ProductForm({ product, onSave, isSaving }: ProductFormProps) {
   const { data: categories } = useCategories();
-  const [form, setForm] = useState<ProductFormData>(defaultFormData);
+  const initialForm = useMemo<ProductFormData>(
+    () =>
+      product
+        ? {
+            name: product.name,
+            genericName: product.genericName,
+            categoryId: product.categoryId ?? "",
+            concentration: product.concentration,
+            dosageForm: product.dosageForm,
+            manufacturer: product.manufacturer,
+            requiresPrescription: product.requiresPrescription,
+            isControlled: product.isControlled,
+            storageCondition: product.storageCondition,
+            unit: product.unit,
+            imageUrl: product.imageUrl ?? "",
+            salePrice: product.salePrice,
+            purchasePrice: product.purchasePrice,
+            expirationDate: product.expirationDate ?? "",
+            manufacturingDate: product.manufacturingDate ?? "",
+          }
+        : defaultFormData,
+    [product],
+  );
+  const [form, setForm] = useState<ProductFormData>(initialForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    if (product) {
-      setForm({
-        name: product.name,
-        genericName: product.genericName,
-        categoryId: product.categoryId ?? "",
-        concentration: product.concentration,
-        dosageForm: product.dosageForm,
-        manufacturer: product.manufacturer,
-        requiresPrescription: product.requiresPrescription,
-        isControlled: product.isControlled,
-        storageCondition: product.storageCondition,
-        unit: product.unit,
-        imageUrl: product.imageUrl ?? "",
-        salePrice: product.salePrice,
-        purchasePrice: product.purchasePrice,
-        expirationDate: product.expirationDate ?? "",
-        manufacturingDate: product.manufacturingDate ?? "",
-      });
-    }
-  }, [product]);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
