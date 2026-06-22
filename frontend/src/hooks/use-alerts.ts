@@ -1,6 +1,6 @@
 import apiClient from "@/lib/api-client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { AlertRule, AlertInstance, AlertSeverity, AlertRuleType } from "@/types";
+import type { AlertRule, AlertInstance, AlertRuleType } from "@/types";
 
 // ─── Alert Rules ─────────────────────────────────────────────────────
 

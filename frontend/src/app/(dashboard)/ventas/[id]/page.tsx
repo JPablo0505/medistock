@@ -4,11 +4,9 @@ import { useParams } from "next/navigation";
 import { SaleDetail } from "@/components/sales/sale-detail";
 import { useSale, useVoidSale } from "@/hooks/use-sales";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 
 export default function SaleDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
   const { data: sale, isLoading, error, refetch } = useSale(id);
   const voidSale = useVoidSale();
 

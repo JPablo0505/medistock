@@ -12,8 +12,6 @@ import {
   Plus,
   Search,
   AlertTriangle,
-  Ban,
-  CheckCircle2,
   RefreshCw,
 } from "lucide-react";
 import { formatCOP } from "@/lib/format";

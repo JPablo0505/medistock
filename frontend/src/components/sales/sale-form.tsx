@@ -84,7 +84,7 @@ export function SaleForm({ products, onSubmit, onCancel, isSubmitting }: SaleFor
           <CardTitle>Items de la venta</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {items.map((item, index) => (
+          {items.map((item) => (
             <div key={item.id} className="flex items-end gap-3 rounded-lg border p-3">
               <div className="flex-1 space-y-1">
                 <Label>Producto</Label>

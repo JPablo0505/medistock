@@ -2,7 +2,6 @@
 
 import { use, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useBatch, useQuarantineBatch, useReleaseFromQuarantine, useDisposeBatch } from "@/hooks/use-batches";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,8 +10,6 @@ import {
   AlertTriangle,
   ArrowLeft,
   Archive,
-  Ban,
-  CheckCircle2,
   RefreshCw,
   ShieldAlert,
   Undo2,
@@ -51,7 +48,6 @@ export default function BatchDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const router = useRouter();
   const { data, isLoading, error, refetch } = useBatch(id);
   const quarantineMutation = useQuarantineBatch();
   const releaseMutation = useReleaseFromQuarantine();
