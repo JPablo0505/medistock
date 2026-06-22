@@ -23,59 +23,6 @@ import {
 } from "lucide-react";
 import { formatCOP } from "@/lib/format";
 
-const statCards = [
-  {
-    key: "totalProducts" as const,
-    label: "Total Products",
-    icon: Package,
-    color: "text-blue-600",
-    bg: "bg-blue-100",
-    border: "border-l-blue-500",
-    trend: "+2%",
-    trendUp: true,
-  },
-  {
-    key: "activeProducts" as const,
-    label: "Active Products",
-    icon: PillBottle,
-    color: "text-green-600",
-    bg: "bg-green-100",
-    border: "border-l-green-500",
-    trend: "Stable",
-    trendUp: null,
-  },
-  {
-    key: "activeBatches" as const,
-    label: "Active Batches",
-    icon: FlaskConical,
-    color: "text-indigo-600",
-    bg: "bg-indigo-100",
-    border: "border-l-indigo-500",
-    trend: "+5%",
-    trendUp: true,
-  },
-  {
-    key: "activeAlerts" as const,
-    label: "Active Alerts",
-    icon: AlertTriangle,
-    color: "text-red-600",
-    bg: "bg-red-100",
-    border: "border-l-red-500",
-    trend: "-1",
-    trendUp: false,
-  },
-  {
-    key: "expiringSoonBatches" as const,
-    label: "Expiring Soon (30d)",
-    icon: Clock,
-    color: "text-amber-600",
-    bg: "bg-amber-100",
-    border: "border-l-amber-500",
-    trend: "+3",
-    trendUp: false,
-  },
-];
-
 const severityConfig: Record<string, { icon: typeof AlertTriangle; color: string; bg: string }> = {
   CRITICAL: { icon: XCircle, color: "text-red-600", bg: "bg-red-50" },
   HIGH: { icon: AlertCircle, color: "text-orange-600", bg: "bg-orange-50" },
@@ -115,6 +62,73 @@ export default function DashboardPage() {
     );
   }
 
+  // ─── Compute data from real sources ───────────────────────────────────
+  const totalProducts = data?.totalProducts ?? 0;
+  const activeProductsCount = products?.filter((p) => p.isActive).length ?? 0;
+  const activeBatchesCount = data?.activeBatches ?? 0;
+  const activeAlertsCount = data?.activeAlerts ?? 0;
+  const expiringSoonCount = data?.expiringSoonBatches ?? 0;
+  const inactiveProducts = totalProducts - activeProductsCount;
+
+  const statCards = [
+    {
+      key: "totalProducts",
+      label: "Total Products",
+      icon: Package,
+      color: "text-blue-600",
+      bg: "bg-blue-100",
+      border: "border-l-blue-500",
+      value: totalProducts,
+      trend: inactiveProducts > 0 ? `${inactiveProducts} inactivos` : "Todos activos",
+      trendUp: inactiveProducts === 0 ? true : inactiveProducts <= 1 ? null : false,
+    },
+    {
+      key: "activeBatches",
+      label: "Lotes Activos",
+      icon: FlaskConical,
+      color: "text-indigo-600",
+      bg: "bg-indigo-100",
+      border: "border-l-indigo-500",
+      value: activeBatchesCount,
+      trend: activeBatchesCount > 0 ? "Con stock" : "Sin lotes",
+      trendUp: activeBatchesCount > 0 ? true : null,
+    },
+    {
+      key: "activeAlerts",
+      label: "Alertas Activas",
+      icon: AlertTriangle,
+      color: "text-red-600",
+      bg: "bg-red-100",
+      border: "border-l-red-500",
+      value: activeAlertsCount,
+      trend: activeAlertsCount === 0 ? "Todo OK" : `${activeAlertsCount} pendientes`,
+      trendUp: activeAlertsCount === 0 ? true : false,
+    },
+    {
+      key: "expiringSoonBatches",
+      label: "Vencen Pronto (30d)",
+      icon: Clock,
+      color: "text-amber-600",
+      bg: "bg-amber-100",
+      border: "border-l-amber-500",
+      value: expiringSoonCount,
+      trend: expiringSoonCount === 0 ? "Ninguno" : `${expiringSoonCount} lotes`,
+      trendUp: expiringSoonCount === 0 ? true : false,
+    },
+    {
+      key: "activeProducts",
+      label: "Productos Activos",
+      icon: PillBottle,
+      color: "text-green-600",
+      bg: "bg-green-100",
+      border: "border-l-green-500",
+      value: activeProductsCount,
+      trend: totalProducts > 0 ? `${Math.round((activeProductsCount / totalProducts) * 100)}% del total` : "Sin datos",
+      trendUp: activeProductsCount === totalProducts ? true : activeProductsCount > 0 ? null : false,
+    },
+  ];
+
+  // Alerts
   const activeAlerts = alerts?.filter((a) => a.status === "ACTIVE") ?? [];
 
   // Group expiring batches by product
@@ -137,6 +151,7 @@ export default function DashboardPage() {
       }
     });
 
+  // Out of stock products
   const outOfStockProducts =
     products
       ?.filter((p) => {
@@ -148,12 +163,15 @@ export default function DashboardPage() {
         return totalStock === 0;
       })
       .slice(0, 5) ?? [];
+
+  // Recent activity
   const recentBatches =
     batches
       ?.filter((b) => b.status === "ACTIVE")
       .sort((a, b) => (b.expirationDate ?? "").localeCompare(a.expirationDate ?? ""))
       .slice(0, 5) ?? [];
 
+  // ─── Render ───────────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
       <div>
@@ -167,7 +185,6 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {statCards.map((card) => {
           const Icon = card.icon;
-          const value = data?.[card.key];
           const TrendIcon =
             card.trendUp === true ? TrendingUp : card.trendUp === false ? TrendingDown : Minus;
 
@@ -182,7 +199,7 @@ export default function DashboardPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">{value ?? "—"}</p>
+                <p className="text-3xl font-bold">{card.value}</p>
                 <div className="mt-1 flex items-center gap-1 text-xs">
                   <TrendIcon
                     className={`h-3 w-3 ${
@@ -215,7 +232,6 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left Column: Recent Activity */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Recent Activity */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -292,7 +308,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Expiring Soon */}
+          {/* Expiring Soon - grouped by product */}
           <Card className="border-amber-200 bg-amber-50/50">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-amber-800">
@@ -333,7 +349,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Out of Stock */}
+          {/* Out of Stock - products */}
           <Card className="border-slate-200 bg-slate-50/50">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-slate-800">
