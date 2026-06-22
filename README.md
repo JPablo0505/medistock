@@ -1,5 +1,14 @@
 # MediStock
 
+[![CI](https://github.com/JPablo0505/medistock/actions/workflows/ci.yml/badge.svg)](https://github.com/JPablo0505/medistock/actions/workflows/ci.yml)
+[![Java](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)](https://openjdk.org/projects/jdk/21/)
+[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.4.4-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=next.js&logoColor=white)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![License](https://img.shields.io/badge/License-Private-red)](#)
+
 Sistema de gestion de inventario farmaceutico construido con Spring Boot (backend) y Next.js (frontend). disenado para droguerias y farmacias con soporte multi-tenant, trazabilidad de lotes, sistema de alertas y ventas.
 
 ---
