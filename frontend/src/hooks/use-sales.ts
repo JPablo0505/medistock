@@ -7,6 +7,7 @@ import type {
 } from "@/types";
 
 export function useSales(filters?: {
+  productId?: string;
   status?: string;
   dateFrom?: string;
   dateTo?: string;
@@ -17,6 +18,7 @@ export function useSales(filters?: {
     queryKey: ["sales", filters],
     queryFn: () => {
       const params: Record<string, string | boolean | number | undefined> = {};
+      if (filters?.productId) params.productId = filters.productId;
       if (filters?.status) params.status = filters.status;
       if (filters?.dateFrom) params.dateFrom = filters.dateFrom;
       if (filters?.dateTo) params.dateTo = filters.dateTo;

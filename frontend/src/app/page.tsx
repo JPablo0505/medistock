@@ -3,6 +3,7 @@
 import { useDashboardSummary } from "@/hooks/use-dashboard";
 import { useAlertInstances } from "@/hooks/use-alerts";
 import { useBatches } from "@/hooks/use-batches";
+import { useProducts } from "@/hooks/use-products";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatCardSkeleton } from "@/components/ui/loading-skeletons";
@@ -93,6 +94,7 @@ export default function DashboardPage() {
   const { data, isLoading } = useDashboardSummary();
   const { data: alerts } = useAlertInstances();
   const { data: batches } = useBatches();
+  const { data: products } = useProducts();
 
   // ─── Loading State ────────────────────────────────────────────────────
   if (isLoading) {
@@ -122,8 +124,17 @@ export default function DashboardPage() {
       })
       .sort((a, b) => new Date(a.expirationDate!).getTime() - new Date(b.expirationDate!).getTime())
       .slice(0, 5) ?? [];
-  const outOfStockBatches =
-    batches?.filter((b) => b.currentQuantity === 0 && b.status === "ACTIVE").slice(0, 5) ?? [];
+  const outOfStockProducts =
+    products
+      ?.filter((p) => {
+        if (!p.isActive) return false;
+        const totalStock =
+          batches
+            ?.filter((b) => b.productId === p.id && b.status === "ACTIVE")
+            .reduce((sum, b) => sum + b.currentQuantity, 0) ?? 0;
+        return totalStock === 0;
+      })
+      .slice(0, 5) ?? [];
   const recentBatches =
     batches
       ?.filter((b) => b.status === "ACTIVE")
@@ -317,17 +328,17 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {outOfStockBatches.length === 0 ? (
-                <p className="text-sm text-slate-600/70">No hay lotes agotados</p>
+              {outOfStockProducts.length === 0 ? (
+                <p className="text-sm text-slate-600/70">Todos los productos tienen stock</p>
               ) : (
                 <div className="space-y-3">
-                  {outOfStockBatches.map((batch) => (
-                    <div key={batch.id} className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-slate-200">
-                        <Package className="h-4 w-4 text-slate-600" />
+                  {outOfStockProducts.map((product) => (
+                    <div key={product.id} className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-red-100">
+                        <Package className="h-4 w-4 text-red-600" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{batch.batchCode}</p>
+                        <p className="text-sm font-medium truncate">{product.name}</p>
                         <p className="text-xs text-red-600">Reorden pendiente</p>
                       </div>
                     </div>

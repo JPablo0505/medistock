@@ -9,6 +9,7 @@ import {
   useCategories,
 } from "@/hooks/use-products";
 import { useBatches } from "@/hooks/use-batches";
+import { useSales } from "@/hooks/use-sales";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -57,6 +58,7 @@ export default function ProductDetailPage() {
   const { data: product, isLoading, error, refetch } = useProduct(id);
   const { data: categories } = useCategories();
   const { data: allBatches } = useBatches();
+  const { data: productSales } = useSales({ productId: id, size: 100 });
   const deactivate = useDeactivateProduct();
   const reactivate = useReactivateProduct();
 
@@ -273,18 +275,35 @@ export default function ProductDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Sales History placeholder */}
+          {/* Sales History */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-primary" />
-                Historial de Ventas (6 meses)
+                Historial de Ventas
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-center h-48 text-muted-foreground">
-                <p className="text-sm">Proximamente: grafico de ventas por producto</p>
-              </div>
+              {!productSales || productSales.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No hay ventas registradas para este producto</p>
+              ) : (
+                <div className="space-y-3">
+                  {productSales.slice(0, 10).map((sale) => (
+                    <div key={sale.id} className="flex items-center justify-between border-b pb-2 last:border-b-0">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium">{sale.saleDate}</p>
+                        <p className="text-xs text-muted-foreground">{sale.itemCount} items - {sale.performedBy}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold">{formatCOP(sale.total)}</p>
+                        <Badge variant={sale.status === "COMPLETED" ? "default" : "secondary"} className="text-xs">
+                          {sale.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -343,16 +362,17 @@ export default function ProductDetailPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Activity className="h-5 w-5 text-primary" />
-                Movimientos
+                Movimientos Recientes
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {productBatches.length === 0 ? (
+              {productBatches.length === 0 && (!productSales || productSales.length === 0) ? (
                 <p className="text-sm text-muted-foreground">No hay movimientos registrados</p>
               ) : (
                 <div className="space-y-4">
-                  {sortedBatches.slice(0, 5).map((batch) => (
-                    <div key={batch.id} className="flex items-start gap-3">
+                  {/* Batch receipts */}
+                  {sortedBatches.slice(0, 3).map((batch) => (
+                    <div key={`batch-${batch.id}`} className="flex items-start gap-3">
                       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100">
                         <Package className="h-3.5 w-3.5 text-blue-600" />
                       </div>
@@ -362,6 +382,22 @@ export default function ProductDetailPage() {
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Costo: {formatCOP(batch.costPerUnit)}/unit
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                  {/* Recent sales */}
+                  {productSales?.slice(0, 3).map((sale) => (
+                    <div key={`sale-${sale.id}`} className="flex items-start gap-3">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-100">
+                        <TrendingUp className="h-3.5 w-3.5 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm">
+                          <strong>Venta:</strong> {sale.itemCount} items - {formatCOP(sale.total)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {sale.saleDate} - {sale.performedBy}
                         </p>
                       </div>
                     </div>
