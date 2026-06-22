@@ -116,14 +116,27 @@ export default function DashboardPage() {
   }
 
   const activeAlerts = alerts?.filter((a) => a.status === "ACTIVE") ?? [];
-  const expiringBatches =
-    batches
-      ?.filter((b) => {
-        if (!b.expirationDate || b.status !== "ACTIVE") return false;
-        return daysUntil(b.expirationDate) <= 30 && daysUntil(b.expirationDate) > 0;
-      })
-      .sort((a, b) => new Date(a.expirationDate!).getTime() - new Date(b.expirationDate!).getTime())
-      .slice(0, 5) ?? [];
+
+  // Group expiring batches by product
+  const expiringByProduct: { productName: string; batches: NonNullable<typeof batches> }[] = [];
+  const expiringMap = new Map<string, number>();
+  batches
+    ?.filter((b) => {
+      if (!b.expirationDate || b.status !== "ACTIVE") return false;
+      return daysUntil(b.expirationDate) <= 30 && daysUntil(b.expirationDate) > 0;
+    })
+    .sort((a, b) => new Date(a.expirationDate!).getTime() - new Date(b.expirationDate!).getTime())
+    .forEach((batch) => {
+      const key = batch.productId;
+      const idx = expiringMap.get(key);
+      if (idx !== undefined) {
+        expiringByProduct[idx].batches.push(batch);
+      } else {
+        expiringMap.set(key, expiringByProduct.length);
+        expiringByProduct.push({ productName: batch.productName ?? "Producto", batches: [batch] });
+      }
+    });
+
   const outOfStockProducts =
     products
       ?.filter((p) => {
@@ -288,32 +301,33 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {expiringBatches.length === 0 ? (
+              {expiringByProduct.length === 0 ? (
                 <p className="text-sm text-amber-600/70">No hay lotes proximos a vencer</p>
               ) : (
-                <div className="space-y-3">
-                  {expiringBatches.map((batch) => {
-                    const days = daysUntil(batch.expirationDate!);
-                    return (
-                      <div
-                        key={batch.id}
-                        className="flex items-center justify-between border-b border-amber-200/50 pb-2 last:border-b-0"
-                      >
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">{batch.batchCode}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {batch.initialQuantity} unidades
-                          </p>
-                        </div>
-                        <Badge
-                          variant={days <= 7 ? "destructive" : "outline"}
-                          className="shrink-0 ml-2"
-                        >
-                          {days}d
-                        </Badge>
+                <div className="space-y-4">
+                  {expiringByProduct.slice(0, 5).map((group, idx) => (
+                    <div key={idx} className="border-b border-amber-200/50 pb-3 last:border-b-0 last:pb-0">
+                      <p className="text-sm font-semibold text-amber-900 mb-1">{group.productName}</p>
+                      <div className="space-y-1.5">
+                        {group.batches.map((batch) => {
+                          const days = daysUntil(batch.expirationDate!);
+                          return (
+                            <div key={batch.id} className="flex items-center justify-between">
+                              <span className="text-xs text-muted-foreground">
+                                {batch.batchCode} · {batch.currentQuantity} unid.
+                              </span>
+                              <Badge
+                                variant={days <= 7 ? "destructive" : "outline"}
+                                className="shrink-0 ml-2 text-xs"
+                              >
+                                {days}d
+                              </Badge>
+                            </div>
+                          );
+                        })}
                       </div>
-                    );
-                  })}
+                    </div>
+                  ))}
                 </div>
               )}
             </CardContent>
