@@ -31,7 +31,9 @@ public class JpaBatchAllocationEntity {
     @Column(name = "cost_per_unit", nullable = false, precision = 12, scale = 2)
     private BigDecimal costPerUnit;
 
-    public JpaBatchAllocationEntity() {}
+    public JpaBatchAllocationEntity() {
+        // Required by JPA
+    }
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }

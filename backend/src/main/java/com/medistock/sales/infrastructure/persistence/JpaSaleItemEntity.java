@@ -44,7 +44,9 @@ public class JpaSaleItemEntity {
     @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<JpaBatchAllocationEntity> batchAllocations = new ArrayList<>();
 
-    public JpaSaleItemEntity() {}
+    public JpaSaleItemEntity() {
+        // Required by JPA
+    }
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }

@@ -60,7 +60,9 @@ public class JpaProduct extends BaseEntity {
     @Column(nullable = false)
     private boolean isActive;
 
-    public JpaProduct() {}
+    public JpaProduct() {
+        // Required by JPA
+    }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }

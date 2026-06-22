@@ -90,64 +90,73 @@ public class EvaluateAlertRulesUseCase {
         Set<UUID> triggeringProductIds = new HashSet<>();
 
         for (Product product : products) {
-            LocalDate expDate = product.getExpirationDate();
-            if (expDate == null) continue;
-
-            long daysUntilExpiry = ChronoUnit.DAYS.between(today, expDate);
-
-            if (daysUntilExpiry <= days) {
-                triggeringProductIds.add(product.getId());
-
-                if (!alertInstanceRepository.existsActiveForRuleAndProduct(rule.getId(), product.getId())) {
-                    String msg;
-                    if (daysUntilExpiry < 0) {
-                        msg = String.format("Medicamento %s venció hace %d días (%s)",
-                                product.getName(), Math.abs(daysUntilExpiry), expDate);
-                    } else {
-                        msg = String.format("Medicamento %s vence en %d días (%s)",
-                                product.getName(), daysUntilExpiry, expDate);
-                    }
-                    AlertTriggeredEvent event = new AlertTriggeredEvent(
-                            rule.getId(), product.getId(), null,
-                            msg, rule.getSeverity().name());
-                    saveInstance(event, rule);
-                    events.add(event);
-                    log.info("Expiration alert: product={}, expires={}, daysUntil={}",
-                            product.getName(), expDate, daysUntilExpiry);
-                }
-            }
+            checkProductExpiration(rule, product, days, today, triggeringProductIds, events);
         }
 
         // ── Also check batch-level expiration ─────────────────────────────
         List<Batch> batches = batchRepository.findAllByTenantId(tenantId);
         for (Batch batch : batches) {
-            if (batch.getStatus() != BatchStatus.ACTIVE) continue;
-
-            LocalDate expDate = batch.getExpirationDate();
-            if (expDate == null) continue;
-
-            long daysUntilBatchExpiry = ChronoUnit.DAYS.between(today, expDate);
-            if (daysUntilBatchExpiry <= days && !triggeringProductIds.contains(batch.getProductId())) {
-                if (!alertInstanceRepository.existsActiveForRuleAndProduct(rule.getId(), batch.getProductId())) {
-                    String msg = daysUntilBatchExpiry >= 0
-                            ? String.format("Lote %s del producto vence en %d días (%s)",
-                            batch.getBatchCode(), daysUntilBatchExpiry, expDate)
-                            : String.format("Lote %s del producto venció hace %d días (%s)",
-                            batch.getBatchCode(), Math.abs(daysUntilBatchExpiry), expDate);
-                    AlertTriggeredEvent event = new AlertTriggeredEvent(
-                            rule.getId(), batch.getProductId(), batch.getId(),
-                            msg, rule.getSeverity().name());
-                    saveInstance(event, rule);
-                    events.add(event);
-                    triggeringProductIds.add(batch.getProductId());
-                }
-            }
+            checkBatchExpiration(rule, batch, days, today, triggeringProductIds, events);
         }
 
         // ── Close stale alerts for products no longer triggering ─────────
         closeStaleExpirationAlerts(rule, products, today, days);
 
         return events;
+    }
+
+    private void checkProductExpiration(AlertRule rule, Product product, int days, LocalDate today,
+                                        Set<UUID> triggeringProductIds, List<AlertTriggeredEvent> events) {
+        LocalDate expDate = product.getExpirationDate();
+        if (expDate == null) return;
+
+        long daysUntilExpiry = ChronoUnit.DAYS.between(today, expDate);
+
+        if (daysUntilExpiry > days) return;
+
+        triggeringProductIds.add(product.getId());
+
+        if (alertInstanceRepository.existsActiveForRuleAndProduct(rule.getId(), product.getId())) return;
+
+        String msg = daysUntilExpiry < 0
+                ? String.format("Medicamento %s venció hace %d días (%s)",
+                product.getName(), Math.abs(daysUntilExpiry), expDate)
+                : String.format("Medicamento %s vence en %d días (%s)",
+                product.getName(), daysUntilExpiry, expDate);
+
+        AlertTriggeredEvent event = new AlertTriggeredEvent(
+                rule.getId(), product.getId(), null,
+                msg, rule.getSeverity().name());
+        saveInstance(event, rule);
+        events.add(event);
+        log.info("Expiration alert: product={}, expires={}, daysUntil={}",
+                product.getName(), expDate, daysUntilExpiry);
+    }
+
+    private void checkBatchExpiration(AlertRule rule, Batch batch, int days, LocalDate today,
+                                      Set<UUID> triggeringProductIds, List<AlertTriggeredEvent> events) {
+        if (batch.getStatus() != BatchStatus.ACTIVE) return;
+
+        LocalDate expDate = batch.getExpirationDate();
+        if (expDate == null) return;
+
+        long daysUntilBatchExpiry = ChronoUnit.DAYS.between(today, expDate);
+        if (daysUntilBatchExpiry > days) return;
+        if (triggeringProductIds.contains(batch.getProductId())) return;
+
+        if (alertInstanceRepository.existsActiveForRuleAndProduct(rule.getId(), batch.getProductId())) return;
+
+        String msg = daysUntilBatchExpiry >= 0
+                ? String.format("Lote %s del producto vence en %d días (%s)",
+                batch.getBatchCode(), daysUntilBatchExpiry, expDate)
+                : String.format("Lote %s del producto venció hace %d días (%s)",
+                batch.getBatchCode(), Math.abs(daysUntilBatchExpiry), expDate);
+        AlertTriggeredEvent event = new AlertTriggeredEvent(
+                rule.getId(), batch.getProductId(), batch.getId(),
+                msg, rule.getSeverity().name());
+        saveInstance(event, rule);
+        events.add(event);
+        triggeringProductIds.add(batch.getProductId());
     }
 
     private void closeStaleExpirationAlerts(AlertRule rule, List<Product> products, LocalDate today, int days) {
@@ -176,49 +185,59 @@ public class EvaluateAlertRulesUseCase {
         int minStock = rule.getMinStock();
 
         // ── Compute stock from ACTIVE batches per product ────────────────
-        List<Batch> batches = batchRepository.findAllByTenantId(tenantId);
-        Map<UUID, Integer> productQuantities = new HashMap<>();
-        for (Batch batch : batches) {
-            if (batch.getStatus() != BatchStatus.ACTIVE) continue;
-            productQuantities.merge(batch.getProductId(), batch.getCurrentQuantity(), Integer::sum);
-        }
+        Map<UUID, Integer> productQuantities = computeStockPerProduct(tenantId);
 
-        log.debug("Low stock check: {} active batches, {} products with stock for tenant={}",
-                batches.size(), productQuantities.size(), tenantId);
+        log.debug("Low stock check: {} products with stock for tenant={}",
+                productQuantities.size(), tenantId);
 
         // ── Check products ───────────────────────────────────────────────
         List<Product> products = productRepository.findByTenantId(tenantId);
         Set<UUID> triggeringProductIds = new HashSet<>();
 
         for (Product product : products) {
-            int totalStock = productQuantities.getOrDefault(product.getId(), 0);
-
-            if (totalStock <= minStock) {
-                triggeringProductIds.add(product.getId());
-
-                if (!alertInstanceRepository.existsActiveForRuleAndProduct(rule.getId(), product.getId())) {
-                    String productName = product.getName();
-                    String msg = totalStock == 0
-                            ? String.format("Medicamento %s NO tiene stock disponible", productName)
-                            : String.format("Medicamento %s tiene solo %d unidades (mínimo: %d)",
-                            productName, totalStock, minStock);
-
-                    AlertSeverity severity = totalStock == 0 ? AlertSeverity.HIGH : rule.getSeverity();
-                    AlertTriggeredEvent event = new AlertTriggeredEvent(
-                            rule.getId(), product.getId(), null,
-                            msg, severity.name());
-                    saveInstance(event, rule);
-                    events.add(event);
-                    log.info("Low stock alert: product={}, stock={}, threshold={}",
-                            productName, totalStock, minStock);
-                }
-            }
+            checkProductLowStock(rule, product, productQuantities, minStock, triggeringProductIds, events);
         }
 
         // ── Close stale alerts for products now above threshold ──────────
         closeStaleLowStockAlerts(rule, triggeringProductIds);
 
         return events;
+    }
+
+    private Map<UUID, Integer> computeStockPerProduct(String tenantId) {
+        List<Batch> batches = batchRepository.findAllByTenantId(tenantId);
+        Map<UUID, Integer> productQuantities = new HashMap<>();
+        for (Batch batch : batches) {
+            if (batch.getStatus() != BatchStatus.ACTIVE) continue;
+            productQuantities.merge(batch.getProductId(), batch.getCurrentQuantity(), Integer::sum);
+        }
+        return productQuantities;
+    }
+
+    private void checkProductLowStock(AlertRule rule, Product product, Map<UUID, Integer> productQuantities,
+                                      int minStock, Set<UUID> triggeringProductIds, List<AlertTriggeredEvent> events) {
+        int totalStock = productQuantities.getOrDefault(product.getId(), 0);
+
+        if (totalStock > minStock) return;
+
+        triggeringProductIds.add(product.getId());
+
+        if (alertInstanceRepository.existsActiveForRuleAndProduct(rule.getId(), product.getId())) return;
+
+        String productName = product.getName();
+        String msg = totalStock == 0
+                ? String.format("Medicamento %s NO tiene stock disponible", productName)
+                : String.format("Medicamento %s tiene solo %d unidades (mínimo: %d)",
+                productName, totalStock, minStock);
+
+        AlertSeverity severity = totalStock == 0 ? AlertSeverity.HIGH : rule.getSeverity();
+        AlertTriggeredEvent event = new AlertTriggeredEvent(
+                rule.getId(), product.getId(), null,
+                msg, severity.name());
+        saveInstance(event, rule);
+        events.add(event);
+        log.info("Low stock alert: product={}, stock={}, threshold={}",
+                productName, totalStock, minStock);
     }
 
     private void closeStaleLowStockAlerts(AlertRule rule, Set<UUID> stillTriggering) {

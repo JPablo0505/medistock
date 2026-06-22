@@ -15,6 +15,8 @@ import java.time.LocalDate;
 @RequestMapping("/api/v1/dashboard")
 public class DashboardController {
 
+    private static final String STATUS_ACTIVE = "ACTIVE";
+
     private final SpringDataJpaProductRepository productRepo;
     private final SpringDataJpaBatchRepository batchRepo;
     private final SpringDataJpaAlertInstanceRepository alertRepo;
@@ -34,13 +36,13 @@ public class DashboardController {
 
         long totalProducts = productRepo.countByTenantId(tenantId);
         long activeProducts = productRepo.countByTenantIdAndIsActive(tenantId, true);
-        long activeBatches = batchRepo.countByTenantIdAndStatus(tenantId, "ACTIVE");
-        long activeAlerts = alertRepo.countByTenantIdAndStatus(tenantId, "ACTIVE");
+        long activeBatches = batchRepo.countByTenantIdAndStatus(tenantId, STATUS_ACTIVE);
+        long activeAlerts = alertRepo.countByTenantIdAndStatus(tenantId, STATUS_ACTIVE);
 
         LocalDate today = LocalDate.now();
         LocalDate in30Days = today.plusDays(30);
         long expiringSoonBatches = batchRepo.countByTenantIdAndStatusAndExpirationDateBetween(
-                tenantId, "ACTIVE", today, in30Days);
+                tenantId, STATUS_ACTIVE, today, in30Days);
 
         DashboardSummary summary = new DashboardSummary(
                 totalProducts, activeProducts, activeBatches, activeAlerts, expiringSoonBatches

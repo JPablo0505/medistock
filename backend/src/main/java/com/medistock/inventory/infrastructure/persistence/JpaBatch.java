@@ -43,7 +43,9 @@ public class JpaBatch extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
-    public JpaBatch() {}
+    public JpaBatch() {
+        // Required by JPA
+    }
 
     // --- Getters and Setters ---
 

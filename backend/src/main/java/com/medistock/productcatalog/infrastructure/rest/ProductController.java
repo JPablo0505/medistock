@@ -45,9 +45,6 @@ public class ProductController {
     public ResponseEntity<ProductDTO> create(@Valid @RequestBody CreateProductRequest request) {
         String tenantId = TenantContext.getTenantId();
         if (tenantId == null) tenantId = "default";
-        if (request.expirationDate() == null) {
-            return ResponseEntity.badRequest().build();
-        }
         ProductDTO result = registerUseCase.execute(tenantId, request.name(), request.unit(),
                 request.expirationDate(), request.manufacturingDate());
         // Apply full update with all fields after registration

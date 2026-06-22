@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/v1/alerts")
 public class AlertController {
 
+    private static final String DEFAULT_TENANT = "default";
+
     private final CreateAlertRuleUseCase createAlertRuleUseCase;
     private final UpdateAlertRuleUseCase updateAlertRuleUseCase;
     private final EvaluateAlertRulesUseCase evaluateAlertRulesUseCase;
@@ -60,7 +62,7 @@ public class AlertController {
             @Valid @RequestBody CreateAlertRuleRequest request,
             @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
         if (tenantId == null) tenantId = TenantContext.getTenantId();
-        if (tenantId == null) tenantId = "default";
+        if (tenantId == null) tenantId = DEFAULT_TENANT;
         var rule = createAlertRuleUseCase.execute(
                 tenantId, request.name(), request.description(),
                 request.type(), request.config());
@@ -73,7 +75,7 @@ public class AlertController {
             @RequestParam(required = false) String type,
             @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
         if (tenantId == null) tenantId = TenantContext.getTenantId();
-        if (tenantId == null) tenantId = "default";
+        if (tenantId == null) tenantId = DEFAULT_TENANT;
         var rules = alertRuleRepository.findByType(tenantId, type).stream()
                 .map(AlertRuleResponse::from)
                 .toList();
@@ -120,7 +122,7 @@ public class AlertController {
             @RequestParam(required = false) String status,
             @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
         if (tenantId == null) tenantId = TenantContext.getTenantId();
-        if (tenantId == null) tenantId = "default";
+        if (tenantId == null) tenantId = DEFAULT_TENANT;
         List<AlertInstance> instances;
         if (status != null) {
             var statusEnum = AlertInstanceStatus.valueOf(status.toUpperCase());
@@ -135,7 +137,7 @@ public class AlertController {
     public ResponseEntity<Long> countActive(
             @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
         if (tenantId == null) tenantId = TenantContext.getTenantId();
-        if (tenantId == null) tenantId = "default";
+        if (tenantId == null) tenantId = DEFAULT_TENANT;
         return ResponseEntity.ok(
                 alertInstanceRepository.countByStatus(tenantId, AlertInstanceStatus.ACTIVE));
     }
@@ -209,7 +211,7 @@ public class AlertController {
     public ResponseEntity<Integer> evaluate(
             @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
         if (tenantId == null) tenantId = TenantContext.getTenantId();
-        if (tenantId == null) tenantId = "default";
+        if (tenantId == null) tenantId = DEFAULT_TENANT;
         var triggered = evaluateAlertRulesUseCase.evaluateAll(tenantId);
         return ResponseEntity.ok(triggered.size());
     }

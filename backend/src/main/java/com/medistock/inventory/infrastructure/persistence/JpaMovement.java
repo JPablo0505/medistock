@@ -43,7 +43,9 @@ public class JpaMovement extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
-    public JpaMovement() {}
+    public JpaMovement() {
+        // Required by JPA
+    }
 
     // --- Getters and Setters ---
 

@@ -15,7 +15,9 @@ public class JpaCategory extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    public JpaCategory() {}
+    public JpaCategory() {
+        // Required by JPA
+    }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }

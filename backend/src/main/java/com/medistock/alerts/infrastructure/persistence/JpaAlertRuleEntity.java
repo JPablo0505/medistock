@@ -36,7 +36,9 @@ public class JpaAlertRuleEntity {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public JpaAlertRuleEntity() {}
+    public JpaAlertRuleEntity() {
+        // Required by JPA
+    }
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }

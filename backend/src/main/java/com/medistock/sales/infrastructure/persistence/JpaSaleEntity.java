@@ -42,7 +42,9 @@ public class JpaSaleEntity extends BaseEntity {
     @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<JpaSaleItemEntity> items = new ArrayList<>();
 
-    public JpaSaleEntity() {}
+    public JpaSaleEntity() {
+        // Required by JPA
+    }
 
     public LocalDateTime getSaleDate() { return saleDate; }
     public void setSaleDate(LocalDateTime saleDate) { this.saleDate = saleDate; }

@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.WebRequest;
 
 import java.time.LocalDateTime;
@@ -115,7 +116,7 @@ public class GlobalExceptionHandler {
 
     private String getCorrelationId(WebRequest request) {
         String attr = (String) request.getAttribute(CorrelationIdFilter.CORRELATION_ID_HEADER,
-                WebRequest.SCOPE_REQUEST);
+                RequestAttributes.SCOPE_REQUEST);
         return attr != null ? attr : "unknown";
     }
 

@@ -46,7 +46,7 @@ public class AdjustStockUseCase {
 
         batch.adjustQuantity(newQuantity, reason);
 
-        MovementType type = diff >= 0 ? MovementType.ADJUSTMENT : MovementType.ADJUSTMENT;
+        MovementType type = MovementType.ADJUSTMENT;
         Movement movement = Movement.record(tenantId, batchId, batch.getProductId(),
                 type, diff, previousQuantity, newQuantity, reason, performedBy);
         movementRepository.save(movement);
