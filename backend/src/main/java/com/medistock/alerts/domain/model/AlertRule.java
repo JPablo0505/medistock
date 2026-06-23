@@ -105,23 +105,24 @@ public class AlertRule implements AggregateRoot {
     }
 
     public int getExpirationDays() {
-        Object val = config.get(CFG_EXPIRATION_DAYS);
-        if (val instanceof Number n) return n.intValue();
-        return 30;
+        return getConfigInt(CFG_EXPIRATION_DAYS, 30);
     }
 
     public int getMinStock() {
-        Object val = config.get(CFG_MIN_STOCK);
-        if (val instanceof Number n) return n.intValue();
-        return 10;
+        return getConfigInt(CFG_MIN_STOCK, 10);
     }
 
     public AlertSeverity getSeverity() {
         Object val = config.get(CFG_SEVERITY);
         if (val instanceof String s) {
             try { return AlertSeverity.valueOf(s.toUpperCase()); }
-            catch (IllegalArgumentException e) { return AlertSeverity.MEDIUM; }
+            catch (IllegalArgumentException ignored) { return AlertSeverity.MEDIUM; }
         }
         return AlertSeverity.MEDIUM;
+    }
+
+    private int getConfigInt(String key, int defaultValue) {
+        Object val = config.get(key);
+        return val instanceof Number n ? n.intValue() : defaultValue;
     }
 }

@@ -80,117 +80,100 @@ public class EvaluateAlertRulesUseCase {
 
     private void cleanupOrphanedAlerts(String tenantId) {
         try {
-            // Get all product IDs that belong to this tenant
-            Set<UUID> tenantProductIds = productRepository.findByTenantId(tenantId).stream()
-                    .map(Product::getId)
-                    .collect(Collectors.toSet());
-
-            // Also get product IDs from batches in this tenant
-            Set<UUID> tenantBatchProductIds = batchRepository.findAllByTenantId(tenantId).stream()
-                    .map(Batch::getProductId)
-                    .collect(Collectors.toSet());
-            tenantProductIds.addAll(tenantBatchProductIds);
-
-            // Resolve active alerts for products NOT in this tenant
+            Set<UUID> tenantProductIds = collectTenantProductIds(tenantId);
             List<AlertInstance> allActive = alertInstanceRepository
                     .findByStatus(tenantId, AlertInstanceStatus.ACTIVE);
-            for (AlertInstance alert : allActive) {
-                if (alert.getProductId() != null && !tenantProductIds.contains(alert.getProductId())) {
-                    alert.resolve();
-                    alertInstanceRepository.save(alert);
-                    log.info("Resolved orphaned alert for product {} (not in tenant {})",
-                            alert.getProductId(), tenantId);
-                }
-            }
 
-            // ── Deduplicate: resolve older ACTIVE alerts for same rule+product ──
+            resolveOrphanedAlerts(allActive, tenantProductIds, tenantId);
             deduplicateAlertInstances(allActive);
         } catch (Exception e) {
             log.warn("Could not run orphan cleanup: {}", e.getMessage());
         }
     }
 
+    private Set<UUID> collectTenantProductIds(String tenantId) {
+        Set<UUID> ids = productRepository.findByTenantId(tenantId).stream()
+                .map(Product::getId)
+                .collect(Collectors.toSet());
+        batchRepository.findAllByTenantId(tenantId).stream()
+                .map(Batch::getProductId)
+                .forEach(ids::add);
+        return ids;
+    }
+
+    private void resolveOrphanedAlerts(List<AlertInstance> alerts, Set<UUID> validProductIds, String tenantId) {
+        alerts.stream()
+                .filter(a -> a.getProductId() != null && !validProductIds.contains(a.getProductId()))
+                .forEach(alert -> {
+                    alert.resolve();
+                    alertInstanceRepository.save(alert);
+                    log.info("Resolved orphaned alert for product {} (not in tenant {})",
+                            alert.getProductId(), tenantId);
+                });
+    }
+
     private void deduplicateAlertInstances(List<AlertInstance> activeAlerts) {
-        // Group by (ruleId, productId) — keep the newest, resolve the rest
         record AlertKey(UUID ruleId, UUID productId) {}
-        Map<AlertKey, List<AlertInstance>> grouped = new HashMap<>();
-        for (AlertInstance alert : activeAlerts) {
-            if (alert.getProductId() == null) continue;
-            AlertKey key = new AlertKey(alert.getAlertRuleId(), alert.getProductId());
-            grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(alert);
-        }
+        Map<AlertKey, List<AlertInstance>> grouped = activeAlerts.stream()
+                .filter(a -> a.getProductId() != null)
+                .collect(Collectors.groupingBy(a -> new AlertKey(a.getAlertRuleId(), a.getProductId())));
 
-        for (Map.Entry<AlertKey, List<AlertInstance>> entry : grouped.entrySet()) {
-            List<AlertInstance> dupes = entry.getValue();
-            if (dupes.size() <= 1) continue;
+        grouped.values().stream()
+                .filter(list -> list.size() > 1)
+                .forEach(dupes -> resolveOlderDuplicates(dupes, dupes.get(0).getAlertRuleId()));
+    }
 
-            // Sort by createdAt DESC — keep newest
-            dupes.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
-            for (int i = 1; i < dupes.size(); i++) {
-                dupes.get(i).resolve();
-                alertInstanceRepository.save(dupes.get(i));
-                log.info("Resolved duplicate alert instance {} for rule={} product={}",
-                        dupes.get(i).getId(), entry.getKey().ruleId(), entry.getKey().productId());
-            }
-        }
+    private void resolveOlderDuplicates(List<AlertInstance> dupes, UUID ruleId) {
+        dupes.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
+        dupes.subList(1, dupes.size()).forEach(alert -> {
+            alert.resolve();
+            alertInstanceRepository.save(alert);
+            log.info("Resolved duplicate alert instance {} for rule={}", alert.getId(), ruleId);
+        });
     }
 
     private void ensureDefaultRules(String tenantId) {
         List<AlertRule> existing = alertRuleRepository.findByType(tenantId, null);
-
-        // ── Deduplicate: keep only one active rule per type ──────────────
         if (existing.size() > 1) {
             deduplicateRules(existing);
             existing = alertRuleRepository.findByType(tenantId, null);
         }
-
         if (!existing.isEmpty()) return;
 
         log.info("No alert rules found for tenant={}, creating defaults", tenantId);
+        alertRuleRepository.save(createExpirationRule(tenantId));
+        alertRuleRepository.save(createLowStockRule(tenantId));
+    }
 
-        // Expiration rule: alert for products expiring within 30 days
-        AlertRule expirationRule = new AlertRule(
-                tenantId,
-                "Vencimiento próximo",
+    private AlertRule createExpirationRule(String tenantId) {
+        return new AlertRule(tenantId, "Vencimiento próximo",
                 "Alerta cuando un medicamento vence en 30 días o menos",
-                AlertRuleType.EXPIRATION,
-                Map.of("expirationDays", 30)
-        );
-        alertRuleRepository.save(expirationRule);
+                AlertRuleType.EXPIRATION, Map.of("expirationDays", 30));
+    }
 
-        // Low stock rule: alert when stock is 0
-        AlertRule lowStockRule = new AlertRule(
-                tenantId,
-                "Stock bajo",
+    private AlertRule createLowStockRule(String tenantId) {
+        return new AlertRule(tenantId, "Stock bajo",
                 "Alerta cuando un medicamento no tiene stock disponible",
-                AlertRuleType.LOW_STOCK,
-                Map.of("minStock", 0)
-        );
-        alertRuleRepository.save(lowStockRule);
+                AlertRuleType.LOW_STOCK, Map.of("minStock", 0));
     }
 
     private void deduplicateRules(List<AlertRule> rules) {
-        // Group by type, keep the first active (or first overall), delete the rest
         Map<AlertRuleType, List<AlertRule>> byType = rules.stream()
                 .collect(Collectors.groupingBy(AlertRule::getType));
 
-        for (Map.Entry<AlertRuleType, List<AlertRule>> entry : byType.entrySet()) {
-            List<AlertRule> sameType = entry.getValue();
-            if (sameType.size() <= 1) continue;
+        byType.values().stream()
+                .filter(list -> list.size() > 1)
+                .forEach(this::keepFirstDeleteRest);
+    }
 
-            // Sort: active first, then by creation date
-            sameType.sort((a, b) -> {
-                if (a.isActive() != b.isActive()) return a.isActive() ? -1 : 1;
-                return a.getCreatedAt().compareTo(b.getCreatedAt());
-            });
-
-            // Keep the first, delete the rest
-            AlertRule keep = sameType.get(0);
-            for (int i = 1; i < sameType.size(); i++) {
-                log.info("Deleting duplicate rule {} ({}) — keeping {}",
-                        sameType.get(i).getName(), sameType.get(i).getId(), keep.getId());
-                alertRuleRepository.deleteById(sameType.get(i).getId());
-            }
-        }
+    private void keepFirstDeleteRest(List<AlertRule> sameType) {
+        sameType.sort((a, b) -> {
+            if (a.isActive() != b.isActive()) return a.isActive() ? -1 : 1;
+            return a.getCreatedAt().compareTo(b.getCreatedAt());
+        });
+        sameType.subList(1, sameType.size()).forEach(rule -> {
+            log.info("Deleting duplicate rule {} ({})", rule.getName(), rule.getId());
+            alertRuleRepository.deleteById(rule.getId());
+        });
     }
 }

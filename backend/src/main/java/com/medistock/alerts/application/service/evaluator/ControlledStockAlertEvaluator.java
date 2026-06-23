@@ -45,36 +45,42 @@ public class ControlledStockAlertEvaluator implements AlertRuleEvaluator {
 
         for (Product product : products) {
             if (!product.isControlled()) continue;
-
-            List<Batch> productBatches = batchRepository.findByProductId(product.getId());
-            int totalStock = productBatches.stream()
-                    .filter(b -> b.getStatus() == BatchStatus.ACTIVE)
-                    .mapToInt(Batch::getCurrentQuantity)
-                    .sum();
-
-            int threshold = rule.getMinStock();
-            if (totalStock <= threshold) {
-                triggeringProductIds.add(product.getId());
-                if (!alertInstanceRepository.existsActiveForRuleAndProduct(
-                        rule.getId(), product.getId())) {
-                    String msg = String.format("Controlado %s: %d unidades (mínimo: %d)",
-                            product.getName(), totalStock, threshold);
-                    AlertTriggeredEvent event = new AlertTriggeredEvent(
-                            rule.getId(), product.getId(), null, msg, rule.getSeverity().name());
-                    saveInstance(event, rule);
-                    events.add(event);
-                }
-            }
+            checkControlledProduct(product, rule, triggeringProductIds, events);
         }
 
-        // Close stale controlled stock alerts
+        closeStaleAlerts(rule, triggeringProductIds, tenantId);
+        return events;
+    }
+
+    private void checkControlledProduct(Product product, AlertRule rule,
+                                         Set<UUID> triggeringProductIds, List<AlertTriggeredEvent> events) {
+        int totalStock = computeStock(product.getId());
+        if (totalStock > rule.getMinStock()) return;
+
+        triggeringProductIds.add(product.getId());
+        if (alertInstanceRepository.existsActiveForRuleAndProduct(rule.getId(), product.getId())) return;
+
+        String msg = String.format("Controlado %s: %d unidades (mínimo: %d)",
+                product.getName(), totalStock, rule.getMinStock());
+        AlertTriggeredEvent event = new AlertTriggeredEvent(
+                rule.getId(), product.getId(), null, msg, rule.getSeverity().name());
+        saveInstance(event, rule);
+        events.add(event);
+    }
+
+    private int computeStock(UUID productId) {
+        return batchRepository.findByProductId(productId).stream()
+                .filter(b -> b.getStatus() == BatchStatus.ACTIVE)
+                .mapToInt(Batch::getCurrentQuantity)
+                .sum();
+    }
+
+    private void closeStaleAlerts(AlertRule rule, Set<UUID> triggeringProductIds, String tenantId) {
         try {
             StaleAlertCleanup.resolveStaleAlerts(alertInstanceRepository, rule, triggeringProductIds, tenantId);
         } catch (Exception e) {
             log.warn("Could not close stale alerts for controlled stock rule: {}", e.getMessage());
         }
-
-        return events;
     }
 
     private void saveInstance(AlertTriggeredEvent event, AlertRule rule) {

@@ -184,17 +184,13 @@ public class AlertController {
     }
 
     private AlertInstanceResponse withProductInfo(AlertInstance instance) {
-        AlertInstanceResponse.ProductEnrichment enrichment = null;
-        if (instance.getProductId() != null) {
-            var productOpt = productRepository.findById(instance.getProductId());
-            if (productOpt.isPresent()) {
-                var product = productOpt.get();
-                int stock = computeStockForProduct(product.getId());
-                enrichment = new AlertInstanceResponse.ProductEnrichment(
-                        product.getName(), product.getDosageForm(),
-                        product.getManufacturer(), stock, product.getExpirationDate());
-            }
-        }
+        AlertInstanceResponse.ProductEnrichment enrichment = instance.getProductId() == null
+                ? null
+                : productRepository.findById(instance.getProductId())
+                        .map(p -> new AlertInstanceResponse.ProductEnrichment(
+                                p.getName(), p.getDosageForm(), p.getManufacturer(),
+                                computeStockForProduct(p.getId()), p.getExpirationDate()))
+                        .orElse(null);
         return AlertInstanceResponse.from(instance, enrichment);
     }
 

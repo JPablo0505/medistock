@@ -82,21 +82,7 @@ public class Product implements AggregateRoot {
                        BigDecimal salePrice, BigDecimal purchasePrice,
                        String imageUrl,
                        LocalDate expirationDate, LocalDate manufacturingDate) {
-        if (name == null || name.isBlank()) {
-            throw new ProductDomainException("Product name must not be blank");
-        }
-        if (unit == null || unit.isBlank()) {
-            throw new ProductDomainException("Unit must not be blank");
-        }
-        if (salePrice != null && salePrice.compareTo(BigDecimal.ZERO) < 0) {
-            throw new ProductDomainException("Sale price must not be negative");
-        }
-        if (expirationDate == null) {
-            throw new ProductDomainException("Expiration date must not be null");
-        }
-        if (manufacturingDate == null) {
-            throw new ProductDomainException("Manufacturing date must not be null");
-        }
+        validateUpdateParams(name, unit, salePrice, expirationDate, manufacturingDate);
 
         this.name = name.trim();
         this.genericName = genericName;
@@ -113,6 +99,20 @@ public class Product implements AggregateRoot {
         this.manufacturingDate = manufacturingDate;
         this.salePrice = salePrice != null ? Money.of(salePrice) : Money.of(BigDecimal.ZERO);
         this.purchasePrice = purchasePrice != null ? Money.of(purchasePrice) : Money.of(BigDecimal.ZERO);
+    }
+
+    private static void validateUpdateParams(String name, String unit, BigDecimal salePrice,
+                                              LocalDate expirationDate, LocalDate manufacturingDate) {
+        if (name == null || name.isBlank())
+            throw new ProductDomainException("Product name must not be blank");
+        if (unit == null || unit.isBlank())
+            throw new ProductDomainException("Unit must not be blank");
+        if (salePrice != null && salePrice.compareTo(BigDecimal.ZERO) < 0)
+            throw new ProductDomainException("Sale price must not be negative");
+        if (expirationDate == null)
+            throw new ProductDomainException("Expiration date must not be null");
+        if (manufacturingDate == null)
+            throw new ProductDomainException("Manufacturing date must not be null");
     }
 
     public void deactivate() {
