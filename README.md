@@ -1,14 +1,12 @@
 <p align="center">
-  <img src="docs/logo.png" alt="MediStock" width="400" />
+  <img src="docs/logo.png" alt="MediStock" width="300" />
 </p>
 
 [![CI](https://github.com/JPablo0505/medistock/actions/workflows/ci.yml/badge.svg)](https://github.com/JPablo0505/medistock/actions/workflows/ci.yml)
 [![Java](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)](https://openjdk.org/projects/jdk/21/)
-[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.4.4-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
-[![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=next.js&logoColor=white)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=JPablo0505_medistock&metric=alert_status&token=ef9bf3357599a2dcebba6d6b7eecb29c5b226555)](https://sonarcloud.io/summary/new_code?id=JPablo0505_medistock)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=JPablo0505_medistock&metric=coverage&token=ef9bf3357599a2dcebba6d6b7eecb29c5b226555)](https://sonarcloud.io/summary/new_code?id=JPablo0505_medistock)
 [![License](https://img.shields.io/badge/License-Private-red)](#)
 
 Sistema de gestion de inventario farmaceutico construido con Spring Boot (backend) y Next.js (frontend). disenado para droguerias y farmacias con soporte multi-tenant, trazabilidad de lotes, sistema de alertas y ventas.
@@ -259,6 +257,32 @@ GitHub Actions ejecuta en cada push y PR a `main`, `feature/**`, `feat/**`:
 - **Optimistic UI**: Loading skeletons, retry buttons, toast notifications para feedback inmediato.
 - **Precios en COP**: Todos los valores monetarios se muestran formateados como pesos colombianos.
 - **Flyway**: Migraciones versionadas y automaticas. El schema se valida contra JPA en cada arranque.
+
+---
+
+## Metodologia de Desarrollo
+
+Este proyecto fue desarrollado utilizando **Spec-Driven Development (SDD)**, un enfoque donde las especificaciones se escriben antes que el codigo. Cada feature paso por las fases de:
+
+1. **Proposal** - Definicion del problema, alcance y enfoque
+2. **Spec** - Requisitos formales con escenarios
+3. **Design** - Arquitectura tecnica y decisiones de diseno
+4. **Tasks** - Desglose en unidades de trabajo implementables
+5. **Apply** - Implementacion guidiada por las specs
+6. **Verify** - Validacion contra los requisitos originales
+
+### Uso de Inteligencia Artificial
+
+Este proyecto fue construido con asistencia de IA (OpenCode / Claude) durante todo el ciclo de desarrollo:
+
+- **Generacion de codigo**: Backend (Spring Boot), frontend (Next.js), tests, migraciones
+- **Diseno de arquitectura**: Decisiones de DDD, patrones Strategy, Hexagonal Architecture
+- **Reduccion de deuda tecnica**: Refactorizacion sistematica de complejidad ciclomatica y cognitiva
+- **Testing**: Generacion de 363 tests con patron AAA, coverage > 70%
+- **CI/CD**: Configuracion de GitHub Actions y SonarCloud
+- **Documentacion**: README, release notes, especificaciones
+
+El codigo fue revisado, validado y aprobado por un desarrollador humano en cada etapa.
 
 ---
 
