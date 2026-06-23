@@ -26,8 +26,9 @@ export function Sidebar() {
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r bg-card">
       {/* Logo */}
       <div className="flex h-14 items-center border-b px-6">
-        <Link href="/" className="flex items-center">
+        <Link href="/" className="flex items-center gap-2.5">
           <img src="/logo.png" alt="MediStock" className="h-8 w-auto" />
+          <span className="text-lg font-semibold tracking-tight">MediStock</span>
         </Link>
       </div>
 
