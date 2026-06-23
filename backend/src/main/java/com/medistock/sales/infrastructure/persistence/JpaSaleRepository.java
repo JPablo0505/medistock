@@ -71,18 +71,18 @@ public class JpaSaleRepository implements SaleRepository {
                                                int page, int size, String sort) {
         Sort sorting = parseSort(sort);
         Pageable pageable = PageRequest.of(page, size, sorting);
+        String normalizedStatus = (status != null && !status.isBlank()) ? status : null;
 
-        if (productId != null && status != null && !status.isBlank()) {
-            return springRepo.findByProductIdAndStatus(tenantId, productId, status, pageable)
-                    .stream().map(this::toDomain).toList();
-        } else if (productId != null) {
-            return springRepo.findByProductId(tenantId, productId, pageable)
-                    .stream().map(this::toDomain).toList();
-        } else {
-            return springRepo.findByTenantIdWithFilters(tenantId,
-                            (status != null && !status.isBlank()) ? status : null, pageable)
+        if (productId != null && normalizedStatus != null) {
+            return springRepo.findByProductIdAndStatus(tenantId, productId, normalizedStatus, pageable)
                     .stream().map(this::toDomain).toList();
         }
+        if (productId != null) {
+            return springRepo.findByProductId(tenantId, productId, pageable)
+                    .stream().map(this::toDomain).toList();
+        }
+        return springRepo.findByTenantIdWithFilters(tenantId, normalizedStatus, pageable)
+                .stream().map(this::toDomain).toList();
     }
 
     @Override

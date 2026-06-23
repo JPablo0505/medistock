@@ -51,6 +51,23 @@ public class Sale implements AggregateRoot {
     }
 
     public static Sale create(String tenantId, String performedBy, List<SaleItem> items, LocalDateTime saleDate) {
+        validateCreateParams(tenantId, performedBy, items, saleDate);
+        validateAllocations(items);
+
+        BigDecimal subtotal = items.stream()
+                .map(SaleItem::getTotalPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return new Sale(
+                UUID.randomUUID(), tenantId, saleDate, SaleType.MANUAL_ENTRY,
+                Collections.unmodifiableList(items), subtotal, subtotal,
+                performedBy, SaleStatus.COMPLETED, null, null,
+                LocalDateTime.now(Clock.systemDefaultZone()),
+                LocalDateTime.now(Clock.systemDefaultZone()));
+    }
+
+    private static void validateCreateParams(String tenantId, String performedBy,
+                                              List<SaleItem> items, LocalDateTime saleDate) {
         if (tenantId == null || tenantId.isBlank())
             throw new SaleDomainException("tenantId must not be blank");
         if (performedBy == null || performedBy.isBlank())
@@ -59,8 +76,9 @@ public class Sale implements AggregateRoot {
             throw new SaleDomainException("Sale must have at least one item");
         if (saleDate == null)
             throw new SaleDomainException("saleDate must not be null");
+    }
 
-        // SAL-R07: Sum of batch allocations must equal item quantity per item
+    private static void validateAllocations(List<SaleItem> items) {
         for (SaleItem item : items) {
             if (item.getAllocatedQuantitySum() != item.getQuantity()) {
                 throw new SaleDomainException(
@@ -68,28 +86,6 @@ public class Sale implements AggregateRoot {
                         .formatted(item.getAllocatedQuantitySum(), item.getQuantity(), item.getProductId()));
             }
         }
-
-        BigDecimal subtotal = items.stream()
-                .map(SaleItem::getTotalPrice)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        // SAL-R11: total = subtotal (no tax/discount for MVP)
-        BigDecimal total = subtotal;
-
-        return new Sale(
-                UUID.randomUUID(),
-                tenantId,
-                saleDate,
-                SaleType.MANUAL_ENTRY,
-                Collections.unmodifiableList(items),
-                subtotal,
-                total,
-                performedBy,
-                SaleStatus.COMPLETED,
-                null,
-                null,
-                LocalDateTime.now(Clock.systemDefaultZone()),
-                LocalDateTime.now(Clock.systemDefaultZone())
-        );
     }
 
     @SuppressWarnings("java:S107")

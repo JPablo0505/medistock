@@ -26,26 +26,21 @@ public class UpdateAlertRuleUseCase {
 
         if (name != null) rule.setName(name);
         if (description != null) rule.setDescription(description);
-        if (type != null) {
-            try {
-                rule.setType(AlertRuleType.valueOf(type.toUpperCase()));
-            } catch (IllegalArgumentException e) {
-                throw new InvalidAlertRuleException("Invalid alert rule type: " + type);
-            }
-        }
+        if (type != null) rule.setType(parseRuleType(type));
         if (config != null) rule.setConfig(config);
 
         return alertRuleRepository.save(rule);
     }
 
+    private AlertRuleType parseRuleType(String type) {
+        try { return AlertRuleType.valueOf(type.toUpperCase()); }
+        catch (IllegalArgumentException e) { throw new InvalidAlertRuleException("Invalid alert rule type: " + type); }
+    }
+
     public void toggleActive(UUID ruleId) {
         AlertRule rule = alertRuleRepository.findById(ruleId)
                 .orElseThrow(() -> new AlertRuleNotFoundException(ruleId));
-        if (rule.isActive()) {
-            rule.deactivate();
-        } else {
-            rule.activate();
-        }
+        if (rule.isActive()) { rule.deactivate(); } else { rule.activate(); }
         alertRuleRepository.save(rule);
     }
 }

@@ -20,24 +20,28 @@ public final class SaleItem implements ValueObject {
     public SaleItem(UUID productId, String productName, String productSku,
                     int quantity, BigDecimal unitPrice,
                     List<BatchAllocation> batchAllocations) {
+        validateParams(productId, productName, quantity, unitPrice, batchAllocations);
+
+        this.itemId = UUID.randomUUID();
+        this.productId = productId;
+        this.productName = productName;
+        this.productSku = productSku != null ? productSku : "";
+        this.quantity = quantity;
+        this.unitPrice = unitPrice;
+        this.totalPrice = unitPrice.multiply(BigDecimal.valueOf(quantity));
+        this.batchAllocations = Collections.unmodifiableList(batchAllocations);
+    }
+
+    private static void validateParams(UUID productId, String productName, int quantity,
+                                        BigDecimal unitPrice, List<BatchAllocation> batchAllocations) {
         if (productId == null) throw new IllegalArgumentException("productId must not be null");
         if (productName == null || productName.isBlank())
             throw new IllegalArgumentException("productName must not be blank");
-        if (productSku == null) productSku = "";
         if (quantity <= 0) throw new IllegalArgumentException("quantity must be > 0");
         if (unitPrice == null || unitPrice.compareTo(BigDecimal.ZERO) < 0)
             throw new IllegalArgumentException("unitPrice must not be null or negative");
         if (batchAllocations == null || batchAllocations.isEmpty())
             throw new IllegalArgumentException("batchAllocations must not be null or empty");
-
-        this.itemId = UUID.randomUUID();
-        this.productId = productId;
-        this.productName = productName;
-        this.productSku = productSku;
-        this.quantity = quantity;
-        this.unitPrice = unitPrice;
-        this.totalPrice = unitPrice.multiply(BigDecimal.valueOf(quantity));
-        this.batchAllocations = Collections.unmodifiableList(batchAllocations);
     }
 
     public UUID getItemId() { return itemId; }

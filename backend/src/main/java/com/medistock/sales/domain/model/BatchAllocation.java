@@ -14,6 +14,11 @@ public record BatchAllocation(
 ) implements ValueObject {
 
     public BatchAllocation {
+        validateParams(batchId, lotNumber, expirationDate, allocatedQuantity, costPerUnit);
+    }
+
+    private static void validateParams(UUID batchId, String lotNumber, LocalDate expirationDate,
+                                        int allocatedQuantity, BigDecimal costPerUnit) {
         if (batchId == null) throw new IllegalArgumentException("batchId must not be null");
         if (lotNumber == null || lotNumber.isBlank()) throw new IllegalArgumentException("lotNumber must not be blank");
         if (expirationDate == null) throw new IllegalArgumentException("expirationDate must not be null");
