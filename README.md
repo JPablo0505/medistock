@@ -2,8 +2,6 @@
   <img src="docs/logo.png" alt="MediStock" width="400" />
 </p>
 
-# MediStock
-
 [![CI](https://github.com/JPablo0505/medistock/actions/workflows/ci.yml/badge.svg)](https://github.com/JPablo0505/medistock/actions/workflows/ci.yml)
 [![Java](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)](https://openjdk.org/projects/jdk/21/)
 [![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.4.4-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
