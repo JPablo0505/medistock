@@ -77,10 +77,8 @@ public class SaleController {
             @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
         tenantId = resolveTenantId(tenantId);
 
-        List<Sale> sales = tenantId != null
-                ? saleRepository.findByTenantWithFilters(
-                        tenantId, productId, status, dateFrom, dateTo, page, size, sort)
-                : saleRepository.findAll();
+        List<Sale> sales = saleRepository.findByTenantWithFilters(
+                tenantId, productId, status, dateFrom, dateTo, page, size, sort);
         List<SaleSummaryResponse> response = sales.stream()
                 .map(SaleSummaryResponse::from)
                 .toList();
