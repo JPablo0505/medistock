@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/logo.png" alt="MediStock" width="400" />
+</p>
+
 # MediStock
 
 [![CI](https://github.com/JPablo0505/medistock/actions/workflows/ci.yml/badge.svg)](https://github.com/JPablo0505/medistock/actions/workflows/ci.yml)
