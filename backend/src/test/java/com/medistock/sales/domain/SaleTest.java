@@ -6,6 +6,7 @@ import com.medistock.sales.domain.model.BatchAllocation;
 import com.medistock.sales.domain.model.Sale;
 import com.medistock.sales.domain.model.SaleItem;
 import com.medistock.sales.domain.model.SaleStatus;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -16,6 +17,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@DisplayName("Sale domain entity")
 class SaleTest {
 
     private static final UUID PRODUCT_ID = UUID.randomUUID();
@@ -30,35 +32,43 @@ class SaleTest {
                 List.of(sampleAllocation()));
     }
 
-    // Scenario 1: Create sale with valid items
     @Test
+    @DisplayName("Should create sale with valid items")
     void shouldCreateSaleWithValidItems() {
+        // Arrange & Act
         Sale sale = Sale.create("tenant-1", "user-1", List.of(sampleItem()));
-        assertNotNull(sale.getSaleId());
-        assertEquals("tenant-1", sale.getTenantId());
-        assertEquals(SaleStatus.COMPLETED, sale.getStatus());
-        assertEquals(1, sale.getItemCount());
-        assertEquals(BigDecimal.valueOf(155.00).stripTrailingZeros(), sale.getTotal().stripTrailingZeros());
-        assertEquals(BigDecimal.valueOf(155.00).stripTrailingZeros(), sale.getSubtotal().stripTrailingZeros());
+
+        // Assert
+        assertNotNull(sale.getSaleId(), "sale id");
+        assertEquals("tenant-1", sale.getTenantId(), "tenant id");
+        assertEquals(SaleStatus.COMPLETED, sale.getStatus(), "status");
+        assertEquals(1, sale.getItemCount(), "item count");
+        assertEquals(BigDecimal.valueOf(155.00).stripTrailingZeros(), sale.getTotal().stripTrailingZeros(), "total");
+        assertEquals(BigDecimal.valueOf(155.00).stripTrailingZeros(), sale.getSubtotal().stripTrailingZeros(), "subtotal");
     }
 
-    // SAL-R01: Create with empty items → throws
     @Test
+    @DisplayName("Should throw when creating sale with empty items")
     void shouldThrowWhenCreatingWithEmptyItems() {
+        // Act & Assert
         assertThrows(SaleDomainException.class,
-                () -> Sale.create("tenant-1", "user-1", List.of()));
+                () -> Sale.create("tenant-1", "user-1", List.of()),
+                "Empty items should throw SaleDomainException");
     }
 
-    // SAL-R03: Create with quantity = 0 → throws (via SaleItem constructor)
     @Test
+    @DisplayName("Should throw when item quantity is zero")
     void shouldThrowWhenItemQuantityIsZero() {
+        // Act & Assert
         assertThrows(IllegalArgumentException.class,
-                () -> new SaleItem(PRODUCT_ID, "Test", "TST", 0, BigDecimal.TEN, List.of(sampleAllocation())));
+                () -> new SaleItem(PRODUCT_ID, "Test", "TST", 0, BigDecimal.TEN, List.of(sampleAllocation())),
+                "Zero quantity item should throw IllegalArgumentException");
     }
 
-    // SAL-R11: Total = sum of items
     @Test
+    @DisplayName("Total should equal sum of item totals")
     void totalShouldEqualSumOfItemTotals() {
+        // Arrange
         BatchAllocation alloc1 = new BatchAllocation(UUID.randomUUID(), "LOT-001", LocalDate.of(2027, Month.JUNE, 1), 5, BigDecimal.valueOf(5.00));
         BatchAllocation alloc2 = new BatchAllocation(UUID.randomUUID(), "LOT-002", LocalDate.of(2027, Month.JULY, 1), 3, BigDecimal.valueOf(5.00));
 
@@ -67,81 +77,114 @@ class SaleTest {
         SaleItem item2 = new SaleItem(UUID.randomUUID(), "Paracetamol 500mg", "PARA-500", 3, BigDecimal.valueOf(8.90),
                 List.of(alloc2));
 
+        // Act
         Sale sale = Sale.create("tenant-1", "user-1", List.of(item1, item2));
+
+        // Assert
         BigDecimal expected = BigDecimal.valueOf(5 * 15.50 + 3 * 8.90);
-        assertEquals(0, sale.getTotal().compareTo(expected));
+        assertEquals(0, sale.getTotal().compareTo(expected), "total should match expected sum");
     }
 
-    // SAL-R07: Sum of batch allocations must equal item quantity
     @Test
+    @DisplayName("Should throw when allocation sum mismatches item quantity")
     void shouldThrowWhenAllocationSumMismatchesQuantity() {
+        // Arrange
         BatchAllocation alloc = new BatchAllocation(BATCH_ID, "LOT-001", LocalDate.of(2027, Month.JUNE, 1), 5, BigDecimal.valueOf(5.00));
         SaleItem item = new SaleItem(PRODUCT_ID, "Test", "TST", 10, BigDecimal.TEN, List.of(alloc));
 
-        // The item was created with 10 quantity but only 5 allocated
-        // Sale.create should catch this
+        // Act & Assert
         assertThrows(SaleDomainException.class,
-                () -> Sale.create("tenant-1", "user-1", List.of(item)));
+                () -> Sale.create("tenant-1", "user-1", List.of(item)),
+                "Mismatched allocation sum should throw");
     }
 
-    // SAL-R06: Price snapshot recorded as submitted
     @Test
+    @DisplayName("Should record price snapshot as submitted")
     void shouldRecordPriceSnapshotAsSubmitted() {
-        BatchAllocation alloc = new BatchAllocation(UUID.randomUUID(), "LOT-001", LocalDate.of(2027, 6, 1), 5, BigDecimal.valueOf(5.00));
+        // Arrange
+        BatchAllocation alloc = new BatchAllocation(UUID.randomUUID(), "LOT-001", LocalDate.of(2027, Month.JUNE, 1), 5, BigDecimal.valueOf(5.00));
         SaleItem item = new SaleItem(PRODUCT_ID, "Test", "TST", 5, BigDecimal.valueOf(14.00),
                 List.of(alloc));
+
+        // Act
         Sale sale = Sale.create("tenant-1", "user-1", List.of(item));
-        assertEquals(0, BigDecimal.valueOf(14.00).compareTo(sale.getItems().get(0).getUnitPrice()));
+
+        // Assert
+        assertEquals(0, BigDecimal.valueOf(14.00).compareTo(sale.getItems().get(0).getUnitPrice()),
+                "unit price should match submitted value");
     }
 
-    // SAL-R08 / SAL-R09: Void completed sale
     @Test
+    @DisplayName("Should void completed sale")
     void shouldVoidCompletedSale() {
+        // Arrange
         Sale sale = Sale.create("tenant-1", "user-1", List.of(sampleItem()));
+
+        // Act
         sale.voidSale("Customer request");
-        assertEquals(SaleStatus.VOIDED, sale.getStatus());
-        assertNotNull(sale.getVoidedAt());
-        assertEquals("Customer request", sale.getVoidReason());
+
+        // Assert
+        assertEquals(SaleStatus.VOIDED, sale.getStatus(), "status should be VOIDED");
+        assertNotNull(sale.getVoidedAt(), "voided timestamp");
+        assertEquals("Customer request", sale.getVoidReason(), "void reason");
     }
 
-    // SAL-R09: Void already-voided → throws
     @Test
+    @DisplayName("Should throw when voiding already voided sale")
     void shouldThrowWhenVoidingAlreadyVoidedSale() {
+        // Arrange
         Sale sale = Sale.create("tenant-1", "user-1", List.of(sampleItem()));
         sale.voidSale("First void");
+
+        // Act & Assert
         assertThrows(SaleAlreadyVoidedException.class,
-                () -> sale.voidSale("Second void"));
+                () -> sale.voidSale("Second void"),
+                "Double void should throw SaleAlreadyVoidedException");
     }
 
-    // SAL-R11: Void with blank reason → throws
     @Test
+    @DisplayName("Should throw when voiding with blank reason")
     void shouldThrowWhenVoidingWithBlankReason() {
+        // Arrange
         Sale sale = Sale.create("tenant-1", "user-1", List.of(sampleItem()));
+
+        // Act & Assert
         assertThrows(SaleDomainException.class,
-                () -> sale.voidSale(""));
+                () -> sale.voidSale(""),
+                "Blank void reason should throw SaleDomainException");
     }
 
-    // SAL-R07: Multi-batch allocation sum = item quantity
     @Test
+    @DisplayName("Should handle multi-batch allocation")
     void shouldHandleMultiBatchAllocation() {
+        // Arrange
         BatchAllocation alloc1 = new BatchAllocation(UUID.randomUUID(), "LOT-A", LocalDate.of(2027, Month.JUNE, 1), 30, BigDecimal.valueOf(5.00));
         BatchAllocation alloc2 = new BatchAllocation(UUID.randomUUID(), "LOT-B", LocalDate.of(2027, Month.JULY, 1), 30, BigDecimal.valueOf(6.00));
         SaleItem item = new SaleItem(PRODUCT_ID, "Test", "TST", 60, BigDecimal.TEN, List.of(alloc1, alloc2));
+
+        // Act
         Sale sale = Sale.create("tenant-1", "user-1", List.of(item));
-        assertEquals(60, item.getAllocatedQuantitySum());
-        assertEquals(2, sale.getItems().get(0).getBatchAllocations().size());
+
+        // Assert
+        assertEquals(60, item.getAllocatedQuantitySum(), "allocated quantity sum");
+        assertEquals(2, sale.getItems().get(0).getBatchAllocations().size(), "batch allocations count");
     }
 
-    // BatchAllocation validation
     @Test
+    @DisplayName("Should reject batch allocation with null batch id")
     void shouldRejectNullBatchId() {
+        // Act & Assert
         assertThrows(IllegalArgumentException.class,
-                () -> new BatchAllocation(null, "LOT", LocalDate.now(), 10, BigDecimal.ONE));
+                () -> new BatchAllocation(null, "LOT", LocalDate.now(), 10, BigDecimal.ONE),
+                "Null batch id should throw IllegalArgumentException");
     }
 
     @Test
+    @DisplayName("Should reject batch allocation with negative quantity")
     void shouldRejectNegativeAllocatedQuantity() {
+        // Act & Assert
         assertThrows(IllegalArgumentException.class,
-                () -> new BatchAllocation(UUID.randomUUID(), "LOT", LocalDate.now(), -1, BigDecimal.ONE));
+                () -> new BatchAllocation(UUID.randomUUID(), "LOT", LocalDate.now(), -1, BigDecimal.ONE),
+                "Negative allocated quantity should throw IllegalArgumentException");
     }
 }

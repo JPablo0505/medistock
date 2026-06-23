@@ -5,6 +5,7 @@ import com.medistock.productcatalog.domain.model.ProductDomainException;
 import com.medistock.productcatalog.domain.model.ProductNotFoundException;
 import com.medistock.productcatalog.domain.port.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("ReactivateProductUseCase")
 class ReactivateProductUseCaseTest {
 
     private static final LocalDate EXP = LocalDate.of(2026, Month.DECEMBER, 31);
@@ -35,35 +37,47 @@ class ReactivateProductUseCaseTest {
     }
 
     @Test
+    @DisplayName("Should reactivate inactive product")
     void shouldReactivateProduct() {
+        // Arrange
         var product = Product.register("tenant-1", "Ibuprofeno", "Tablet", EXP, MFR);
         product.deactivate();
         when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
         when(productRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
+        // Act
         var result = useCase.execute(product.getId());
 
-        assertThat(result.isActive()).isTrue();
+        // Assert
+        assertThat(result.isActive()).as("active flag after reactivate").isTrue();
         verify(productRepository).save(product);
     }
 
     @Test
+    @DisplayName("Should throw when product not found")
     void shouldThrowWhenNotFound() {
+        // Arrange
         UUID id = UUID.randomUUID();
         when(productRepository.findById(id)).thenReturn(Optional.empty());
 
+        // Act & Assert
         assertThatThrownBy(() -> useCase.execute(id))
+                .as("Non-existent product should throw ProductNotFoundException")
                 .isInstanceOf(ProductNotFoundException.class);
 
         verify(productRepository, never()).save(any());
     }
 
     @Test
+    @DisplayName("Should throw when product is already active")
     void shouldThrowWhenAlreadyActive() {
+        // Arrange
         var product = Product.register("tenant-1", "Ibuprofeno", "Tablet", EXP, MFR);
         when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
 
+        // Act & Assert
         assertThatThrownBy(() -> useCase.execute(product.getId()))
+                .as("Reactivating active product should throw")
                 .isInstanceOf(ProductDomainException.class)
                 .hasMessageContaining("already active");
 

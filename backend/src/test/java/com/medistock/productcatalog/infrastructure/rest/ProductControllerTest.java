@@ -8,6 +8,7 @@ import com.medistock.productcatalog.application.service.DeactivateProductUseCase
 import com.medistock.productcatalog.application.service.ReactivateProductUseCase;
 import com.medistock.productcatalog.domain.port.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -30,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(ProductController.class)
 @Import(ProductControllerTest.TestSecurityConfig.class)
+@DisplayName("ProductController REST endpoints")
 class ProductControllerTest {
 
     @org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc(addFilters = false)
@@ -70,7 +72,9 @@ class ProductControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/v1/products — should list products")
     void shouldListProducts() throws Exception {
+        // Arrange
         var product = com.medistock.productcatalog.domain.model.Product.register(
                 "test-tenant", "Ibuprofeno", "Tablet",
                 LocalDate.of(2026, Month.DECEMBER, 31), LocalDate.of(2025, Month.JANUARY, 1));
@@ -78,16 +82,20 @@ class ProductControllerTest {
         when(productRepository.findByTenantId(anyString()))
                 .thenReturn(List.of(product));
 
+        // Act & Assert
         mockMvc.perform(get("/api/v1/products"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("Ibuprofeno"));
     }
 
     @Test
+    @DisplayName("GET /api/v1/products — should return empty list when no products")
     void shouldReturnEmptyListWhenNoProducts() throws Exception {
+        // Arrange
         when(productRepository.findByTenantId(anyString()))
                 .thenReturn(List.of());
 
+        // Act & Assert
         mockMvc.perform(get("/api/v1/products"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())

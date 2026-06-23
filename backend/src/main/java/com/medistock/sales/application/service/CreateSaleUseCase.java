@@ -16,6 +16,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.util.List;
 
 @Service
@@ -79,7 +80,7 @@ public class CreateSaleUseCase {
                 .map(line -> new BatchAllocation(
                         line.batchId(),
                         line.batchCode() != null ? line.batchCode() : "",
-                        line.expirationDate() != null ? line.expirationDate() : java.time.LocalDate.now(),
+                        line.expirationDate() != null ? line.expirationDate() : java.time.LocalDate.now(Clock.systemDefaultZone()),
                         line.quantityAllocated(),
                         line.unitCost() != null ? line.unitCost() : java.math.BigDecimal.ZERO
                 ))

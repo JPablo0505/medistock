@@ -53,10 +53,11 @@ public class AlertRule implements AggregateRoot {
         this.updatedAt = updatedAt;
     }
 
+    @SuppressWarnings("java:S107")
     public static AlertRule restore(UUID id, String tenantId, String name, String description,
-                                     AlertRuleType type, Map<String, Object> config,
-                                     boolean isActive, LocalDateTime createdAt,
-                                     LocalDateTime updatedAt) {
+                                      AlertRuleType type, Map<String, Object> config,
+                                      boolean isActive, LocalDateTime createdAt,
+                                      LocalDateTime updatedAt) {
         return new AlertRule(id, tenantId, name, description, type, config, isActive, createdAt, updatedAt);
     }
 

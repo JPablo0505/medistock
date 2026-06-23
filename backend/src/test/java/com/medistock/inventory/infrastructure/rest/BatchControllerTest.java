@@ -12,6 +12,7 @@ import com.medistock.inventory.domain.port.MovementRepository;
 import com.medistock.productcatalog.domain.port.ProductRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -38,6 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(BatchController.class)
 @Import(BatchControllerTest.TestSecurityConfig.class)
+@DisplayName("BatchController REST endpoints")
 class BatchControllerTest {
 
     @org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc(addFilters = false)
@@ -96,7 +98,9 @@ class BatchControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/v1/batches — should receive batch (201)")
     void shouldReceiveBatch() throws Exception {
+        // Arrange
         when(receiveStockUseCase.execute(any(), anyString(), anyInt(), any(), any(), any(), any(), any()))
                 .thenReturn(sampleBatch);
 
@@ -105,6 +109,7 @@ class BatchControllerTest {
                 LocalDate.of(2027, Month.JUNE, 18), null,
                 BigDecimal.valueOf(15.50), null, null);
 
+        // Act & Assert
         mockMvc.perform(post("/api/v1/batches")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -113,20 +118,26 @@ class BatchControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/v1/batches — should list batches")
     void shouldListBatches() throws Exception {
+        // Arrange
         when(batchRepository.findAllByTenantId(anyString()))
                 .thenReturn(List.of(sampleBatch));
 
+        // Act & Assert
         mockMvc.perform(get("/api/v1/batches"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].batchCode").value("BATCH-001"));
     }
 
     @Test
+    @DisplayName("GET /api/v1/batches — should return empty list when no batches")
     void shouldReturnEmptyListWhenNoBatches() throws Exception {
+        // Arrange
         when(batchRepository.findAllByTenantId(anyString()))
                 .thenReturn(List.of());
 
+        // Act & Assert
         mockMvc.perform(get("/api/v1/batches"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
@@ -134,12 +145,15 @@ class BatchControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/v1/batches/{id} — should get batch by id")
     void shouldGetBatchById() throws Exception {
+        // Arrange
         when(batchRepository.findById(any()))
                 .thenReturn(Optional.of(sampleBatch));
         when(movementRepository.findByBatchId(any()))
                 .thenReturn(List.of());
 
+        // Act & Assert
         mockMvc.perform(get("/api/v1/batches/" + sampleBatch.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.batch.batchCode").value("BATCH-001"))
@@ -147,21 +161,28 @@ class BatchControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/v1/batches/{id} — should return 409 when batch not found")
     void shouldReturn409WhenBatchNotFound() throws Exception {
+        // Arrange
         UUID id = UUID.randomUUID();
         when(batchRepository.findById(id))
                 .thenReturn(Optional.empty());
 
+        // Act & Assert
         mockMvc.perform(get("/api/v1/batches/" + id))
                 .andExpect(status().isConflict());
     }
 
     @Test
+    @DisplayName("POST /api/v1/batches/{id}/quarantine — should quarantine batch")
     void shouldQuarantineBatch() throws Exception {
+        // Arrange
         when(quarantineUseCase.execute(any(), anyString()))
                 .thenReturn(sampleBatch);
 
         QuarantineRequest request = new QuarantineRequest("Quality issue");
+
+        // Act & Assert
         mockMvc.perform(post("/api/v1/batches/" + sampleBatch.getId() + "/quarantine")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -169,11 +190,15 @@ class BatchControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/v1/batches/{id}/release — should release from quarantine")
     void shouldReleaseFromQuarantine() throws Exception {
+        // Arrange
         when(releaseFromQuarantineUseCase.execute(any(), anyString()))
                 .thenReturn(sampleBatch);
 
         QuarantineRequest request = new QuarantineRequest("Cleared inspection");
+
+        // Act & Assert
         mockMvc.perform(post("/api/v1/batches/" + sampleBatch.getId() + "/release")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -181,11 +206,15 @@ class BatchControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/v1/batches/{id}/dispose — should dispose batch")
     void shouldDisposeBatch() throws Exception {
+        // Arrange
         when(writeOffUseCase.execute(any(), anyString()))
                 .thenReturn(sampleBatch);
 
         DisposeRequest request = new DisposeRequest("Contamination");
+
+        // Act & Assert
         mockMvc.perform(post("/api/v1/batches/" + sampleBatch.getId() + "/dispose")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -193,11 +222,15 @@ class BatchControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/v1/batches/{id}/adjust — should adjust stock")
     void shouldAdjustStock() throws Exception {
+        // Arrange
         when(adjustStockUseCase.execute(any(), anyInt(), anyString()))
                 .thenReturn(sampleBatch);
 
         AdjustStockRequest request = new AdjustStockRequest(80, "Found damage");
+
+        // Act & Assert
         mockMvc.perform(post("/api/v1/batches/" + sampleBatch.getId() + "/adjust")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -205,13 +238,16 @@ class BatchControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/v1/batches/stock/{productId} — should get stock summary")
     void shouldGetStockSummary() throws Exception {
+        // Arrange
         StockProjection projection = new StockProjection(
                 productId, 100, 100, 0, 0, 0, 1,
                 LocalDate.of(2027, Month.JUNE, 18));
         when(getStockSummaryUseCase.execute(productId))
                 .thenReturn(projection);
 
+        // Act & Assert
         mockMvc.perform(get("/api/v1/batches/stock/" + productId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalQuantity").value(100))

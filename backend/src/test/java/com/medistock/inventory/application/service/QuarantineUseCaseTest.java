@@ -6,6 +6,7 @@ import com.medistock.inventory.domain.port.BatchRepository;
 import com.medistock.inventory.domain.port.MovementRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -24,6 +25,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("QuarantineUseCase")
 class QuarantineUseCaseTest {
 
     private static final String TENANT = "test-tenant";
@@ -50,35 +52,47 @@ class QuarantineUseCaseTest {
     }
 
     @Test
+    @DisplayName("Should quarantine active batch")
     void shouldQuarantineBatch() {
+        // Arrange
         when(batchRepository.findById(activeBatch.getId())).thenReturn(Optional.of(activeBatch));
         when(batchRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
+        // Act
         var result = useCase.execute(activeBatch.getId(), "Quality inspection failed");
 
-        assertThat(result.getStatus()).isEqualTo(BatchStatus.QUARANTINED);
-        assertThat(result.getCurrentQuantity()).isEqualTo(100);
+        // Assert
+        assertThat(result.getStatus()).as("status after quarantine").isEqualTo(BatchStatus.QUARANTINED);
+        assertThat(result.getCurrentQuantity()).as("current quantity").isEqualTo(100);
         verify(movementRepository).save(movementCaptor.capture());
-        assertThat(movementCaptor.getValue().getType()).isEqualTo(MovementType.QUARANTINE_IN);
+        assertThat(movementCaptor.getValue().getType()).as("movement type").isEqualTo(MovementType.QUARANTINE_IN);
         verify(eventPublisher).publishEvent(any(BatchQuarantinedEvent.class));
     }
 
     @Test
+    @DisplayName("Should throw when batch not found")
     void shouldThrowWhenBatchNotFound() {
+        // Arrange
         UUID id = UUID.randomUUID();
         when(batchRepository.findById(id)).thenReturn(Optional.empty());
 
+        // Act & Assert
         assertThatThrownBy(() -> useCase.execute(id, "reason"))
+                .as("Non-existent batch should throw")
                 .isInstanceOf(InventoryDomainException.class)
                 .hasMessageContaining("Batch not found");
     }
 
     @Test
+    @DisplayName("Should throw when batch is already quarantined")
     void shouldThrowWhenAlreadyQuarantined() {
+        // Arrange
         activeBatch.quarantine();
         when(batchRepository.findById(activeBatch.getId())).thenReturn(Optional.of(activeBatch));
 
+        // Act & Assert
         assertThatThrownBy(() -> useCase.execute(activeBatch.getId(), "double quarantine"))
+                .as("Double quarantine should throw")
                 .isInstanceOf(InventoryDomainException.class)
                 .hasMessageContaining("already QUARANTINED");
 
@@ -87,11 +101,15 @@ class QuarantineUseCaseTest {
     }
 
     @Test
+    @DisplayName("Should throw when batch is disposed")
     void shouldThrowWhenDisposed() {
+        // Arrange
         activeBatch.dispose();
         when(batchRepository.findById(activeBatch.getId())).thenReturn(Optional.of(activeBatch));
 
+        // Act & Assert
         assertThatThrownBy(() -> useCase.execute(activeBatch.getId(), "can't quarantine disposed"))
+                .as("Quarantining disposed batch should throw")
                 .isInstanceOf(InventoryDomainException.class)
                 .hasMessageContaining("Cannot quarantine a DISPOSED batch");
     }

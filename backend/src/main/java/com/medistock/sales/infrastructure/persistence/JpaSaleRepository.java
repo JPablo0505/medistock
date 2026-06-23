@@ -15,6 +15,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -201,7 +202,7 @@ public class JpaSaleRepository implements SaleRepository {
         return new BatchAllocation(
                 entity.getBatchId(),
                 entity.getBatchCode() != null ? entity.getBatchCode() : "",
-                entity.getExpirationDate() != null ? entity.getExpirationDate() : LocalDate.now(),
+                entity.getExpirationDate() != null ? entity.getExpirationDate() : LocalDate.now(Clock.systemDefaultZone()),
                 entity.getAllocatedQuantity(),
                 entity.getCostPerUnit() != null ? entity.getCostPerUnit() : BigDecimal.ZERO
         );

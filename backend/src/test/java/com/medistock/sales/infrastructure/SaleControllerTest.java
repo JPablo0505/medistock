@@ -5,6 +5,7 @@ import com.medistock.sales.application.service.VoidSaleUseCase;
 import com.medistock.sales.domain.model.*;
 import com.medistock.sales.domain.port.SaleRepository;
 import com.medistock.sales.infrastructure.rest.SaleController;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -31,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(SaleController.class)
 @Import(SaleControllerTest.TestSecurityConfig.class)
+@DisplayName("SaleController REST endpoints")
 class SaleControllerTest {
 
     @Autowired
@@ -60,7 +62,9 @@ class SaleControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/v1/sales — should create sale (201)")
     void shouldCreateSale() throws Exception {
+        // Arrange
         BatchAllocation alloc = new BatchAllocation(BATCH_ID, "LOT-001",
                 LocalDate.of(2027, Month.JUNE, 1), 10, BigDecimal.valueOf(5.00));
         SaleItem item = new SaleItem(PRODUCT_ID, "Ibuprofeno", "IBU-400",
@@ -69,6 +73,7 @@ class SaleControllerTest {
 
         when(createSaleUseCase.execute(any())).thenReturn(sale);
 
+        // Act & Assert
         mockMvc.perform(post("/api/v1/sales")
                         .header("X-Tenant-Id", "tenant-1")
                         .header("X-User-Id", "user-1")
@@ -84,10 +89,13 @@ class SaleControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/v1/sales — should list sales")
     void shouldListSales() throws Exception {
+        // Arrange
         when(saleRepository.findByTenantWithFilters(any(), any(), any(), any(), any(), anyInt(), anyInt(), any()))
                 .thenReturn(List.of());
 
+        // Act & Assert
         mockMvc.perform(get("/api/v1/sales")
                         .header("X-Tenant-Id", "tenant-1"))
                 .andExpect(status().isOk())
@@ -95,7 +103,9 @@ class SaleControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/v1/sales/{id} — should get sale by id")
     void shouldGetSaleById() throws Exception {
+        // Arrange
         UUID saleId = UUID.randomUUID();
         BatchAllocation alloc = new BatchAllocation(BATCH_ID, "LOT-001",
                 LocalDate.of(2027, Month.JUNE, 1), 10, BigDecimal.valueOf(5.00));
@@ -105,6 +115,7 @@ class SaleControllerTest {
 
         when(saleRepository.findById(saleId)).thenReturn(Optional.of(sale));
 
+        // Act & Assert
         mockMvc.perform(get("/api/v1/sales/{id}", saleId)
                         .header("X-Tenant-Id", "tenant-1"))
                 .andExpect(status().isOk())
@@ -112,17 +123,22 @@ class SaleControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/v1/sales/{id} — should return 404 when sale not found")
     void shouldReturn404WhenSaleNotFound() throws Exception {
+        // Arrange
         UUID saleId = UUID.randomUUID();
         when(saleRepository.findById(saleId)).thenReturn(Optional.empty());
 
+        // Act & Assert
         mockMvc.perform(get("/api/v1/sales/{id}", saleId)
                         .header("X-Tenant-Id", "tenant-1"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
+    @DisplayName("POST /api/v1/sales/{id}/void — should void sale")
     void shouldVoidSale() throws Exception {
+        // Arrange
         UUID saleId = UUID.randomUUID();
         BatchAllocation alloc = new BatchAllocation(BATCH_ID, "LOT-001",
                 LocalDate.of(2027, Month.JUNE, 1), 10, BigDecimal.valueOf(5.00));
@@ -133,6 +149,7 @@ class SaleControllerTest {
 
         when(voidSaleUseCase.execute(saleId, "Customer return")).thenReturn(sale);
 
+        // Act & Assert
         mockMvc.perform(post("/api/v1/sales/{id}/void", saleId)
                         .header("X-Tenant-Id", "tenant-1")
                         .contentType(MediaType.APPLICATION_JSON)

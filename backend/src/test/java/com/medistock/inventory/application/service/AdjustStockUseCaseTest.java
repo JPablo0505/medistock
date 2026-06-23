@@ -6,6 +6,7 @@ import com.medistock.inventory.domain.port.BatchRepository;
 import com.medistock.inventory.domain.port.MovementRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -24,6 +25,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("AdjustStockUseCase")
 class AdjustStockUseCaseTest {
 
     private static final String TENANT = "test-tenant";
@@ -51,49 +53,65 @@ class AdjustStockUseCaseTest {
     }
 
     @Test
+    @DisplayName("Should adjust stock upward with positive diff")
     void shouldAdjustStockWithPositiveDiff() {
-        activeBatch.allocate(30); // now at 70
+        // Arrange
+        activeBatch.allocate(30);
         when(batchRepository.findById(activeBatch.getId())).thenReturn(Optional.of(activeBatch));
         when(batchRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
+        // Act
         var result = useCase.execute(activeBatch.getId(), 80, "Corrected after count");
 
-        assertThat(result.getCurrentQuantity()).isEqualTo(80);
+        // Assert
+        assertThat(result.getCurrentQuantity()).as("adjusted quantity").isEqualTo(80);
         verify(movementRepository).save(movementCaptor.capture());
-        assertThat(movementCaptor.getValue().getQuantity()).isEqualTo(10);
-        assertThat(movementCaptor.getValue().getType()).isEqualTo(MovementType.ADJUSTMENT);
+        assertThat(movementCaptor.getValue().getQuantity()).as("movement diff").isEqualTo(10);
+        assertThat(movementCaptor.getValue().getType()).as("movement type").isEqualTo(MovementType.ADJUSTMENT);
         verify(eventPublisher).publishEvent(any(StockAdjustedEvent.class));
     }
 
     @Test
+    @DisplayName("Should decrease stock with negative diff")
     void shouldDecreaseStock() {
+        // Arrange
         when(batchRepository.findById(activeBatch.getId())).thenReturn(Optional.of(activeBatch));
         when(batchRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
+        // Act
         var result = useCase.execute(activeBatch.getId(), 70, "Removed damaged units");
 
-        assertThat(result.getCurrentQuantity()).isEqualTo(70);
+        // Assert
+        assertThat(result.getCurrentQuantity()).as("decreased quantity").isEqualTo(70);
         verify(movementRepository).save(movementCaptor.capture());
-        assertThat(movementCaptor.getValue().getQuantity()).isEqualTo(-30);
+        assertThat(movementCaptor.getValue().getQuantity()).as("negative movement").isEqualTo(-30);
     }
 
     @Test
+    @DisplayName("Should set to zero and deplete batch")
     void shouldSetToZeroAndDeplete() {
+        // Arrange
         when(batchRepository.findById(activeBatch.getId())).thenReturn(Optional.of(activeBatch));
         when(batchRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
+        // Act
         var result = useCase.execute(activeBatch.getId(), 0, "Fully depleted");
 
-        assertThat(result.getCurrentQuantity()).isEqualTo(0);
-        assertThat(result.getStatus()).isEqualTo(BatchStatus.DEPLETED);
+        // Assert
+        assertThat(result.getCurrentQuantity()).as("depleted quantity").isEqualTo(0);
+        assertThat(result.getStatus()).as("depleted status").isEqualTo(BatchStatus.DEPLETED);
     }
 
     @Test
+    @DisplayName("Should throw when batch not found")
     void shouldThrowWhenBatchNotFound() {
+        // Arrange
         UUID id = UUID.randomUUID();
         when(batchRepository.findById(id)).thenReturn(Optional.empty());
 
+        // Act & Assert
         assertThatThrownBy(() -> useCase.execute(id, 50, "test"))
+                .as("Non-existent batch should throw")
                 .isInstanceOf(InventoryDomainException.class)
                 .hasMessageContaining("Batch not found");
 
@@ -103,11 +121,15 @@ class AdjustStockUseCaseTest {
     }
 
     @Test
+    @DisplayName("Should throw when batch is disposed")
     void shouldThrowWhenBatchDisposed() {
+        // Arrange
         activeBatch.dispose();
         when(batchRepository.findById(activeBatch.getId())).thenReturn(Optional.of(activeBatch));
 
+        // Act & Assert
         assertThatThrownBy(() -> useCase.execute(activeBatch.getId(), 50, "test"))
+                .as("Disposed batch should throw")
                 .isInstanceOf(InventoryDomainException.class)
                 .hasMessageContaining("Cannot adjust");
 
@@ -116,19 +138,27 @@ class AdjustStockUseCaseTest {
     }
 
     @Test
+    @DisplayName("Should throw when target quantity is negative")
     void shouldThrowWhenNegativeQuantity() {
+        // Arrange
         when(batchRepository.findById(activeBatch.getId())).thenReturn(Optional.of(activeBatch));
 
+        // Act & Assert
         assertThatThrownBy(() -> useCase.execute(activeBatch.getId(), -5, "test"))
+                .as("Negative target quantity should throw")
                 .isInstanceOf(InventoryDomainException.class)
                 .hasMessageContaining("negative");
     }
 
     @Test
+    @DisplayName("Should throw when target exceeds initial quantity")
     void shouldThrowWhenExceedsInitialQuantity() {
+        // Arrange
         when(batchRepository.findById(activeBatch.getId())).thenReturn(Optional.of(activeBatch));
 
+        // Act & Assert
         assertThatThrownBy(() -> useCase.execute(activeBatch.getId(), 200, "test"))
+                .as("Exceeding initial quantity should throw")
                 .isInstanceOf(InventoryDomainException.class)
                 .hasMessageContaining("exceed initial");
     }

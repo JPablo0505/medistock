@@ -23,6 +23,7 @@ public class Movement {
     private final String performedBy;
     private final LocalDateTime createdAt;
 
+    @SuppressWarnings("java:S107")
     private Movement(UUID id, String tenantId, UUID batchId, UUID productId,
                      MovementType type, int quantity, int previousQuantity, int newQuantity,
                      String reason, String performedBy) {
@@ -42,6 +43,7 @@ public class Movement {
     /**
      * Factory method for creating a new movement.
      */
+    @SuppressWarnings("java:S107")
     public static Movement create(String tenantId, UUID batchId, UUID productId,
                                     MovementType type, int quantity,
                                     int previousQuantity, int newQuantity,

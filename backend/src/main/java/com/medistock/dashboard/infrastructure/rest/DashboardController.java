@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Clock;
 import java.time.LocalDate;
 
 @RestController
@@ -39,7 +40,7 @@ public class DashboardController {
         long activeBatches = batchRepo.countByTenantIdAndStatus(tenantId, STATUS_ACTIVE);
         long activeAlerts = alertRepo.countByTenantIdAndStatus(tenantId, STATUS_ACTIVE);
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(Clock.systemDefaultZone());
         LocalDate in30Days = today.plusDays(30);
         long expiringSoonBatches = batchRepo.countByTenantIdAndStatusAndExpirationDateBetween(
                 tenantId, STATUS_ACTIVE, today, in30Days);

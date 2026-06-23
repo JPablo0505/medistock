@@ -15,9 +15,9 @@ import com.medistock.sales.domain.model.Sale;
 import com.medistock.sales.domain.model.SaleStatus;
 import com.medistock.sales.domain.port.SaleRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
@@ -34,6 +34,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("CreateSaleUseCase")
 class CreateSaleUseCaseTest {
 
     @Mock private ProductRepository productRepository;
@@ -54,9 +55,10 @@ class CreateSaleUseCaseTest {
         useCase = new CreateSaleUseCase(productRepository, batchAllocator, saleRepository, eventPublisher);
     }
 
-    // Scenario 1: Success — BatchAllocator called, event published
     @Test
+    @DisplayName("Should create sale successfully with event published")
     void shouldCreateSaleSuccessfully() {
+        // Arrange
         Product product = Product.register(TENANT_ID, "Ibuprofeno 400mg", "tableta", EXP, MFR);
         when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
 
@@ -71,20 +73,23 @@ class CreateSaleUseCaseTest {
                 List.of(new CreateSaleCommand.CreateSaleItem(PRODUCT_ID, "Ibuprofeno 400mg", "IBU-400",
                         10, BigDecimal.valueOf(15.50))));
 
+        // Act
         Sale result = useCase.execute(command);
 
-        assertNotNull(result);
-        assertEquals(SaleStatus.COMPLETED, result.getStatus());
-        assertEquals(1, result.getItemCount());
+        // Assert
+        assertNotNull(result, "result");
+        assertEquals(SaleStatus.COMPLETED, result.getStatus(), "status");
+        assertEquals(1, result.getItemCount(), "item count");
 
         verify(batchAllocator).allocate(PRODUCT_ID, 10);
         verify(saleRepository).save(any());
         verify(eventPublisher).publishEvent(any(SaleCompletedEvent.class));
     }
 
-    // Scenario 4: InsufficientStock → propagated
     @Test
+    @DisplayName("Should throw when stock is insufficient")
     void shouldThrowWhenInsufficientStock() {
+        // Arrange
         Product product = Product.register(TENANT_ID, "Test", "unit", EXP, MFR);
         when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
         when(batchAllocator.allocate(PRODUCT_ID, 100))
@@ -94,26 +99,32 @@ class CreateSaleUseCaseTest {
                 List.of(new CreateSaleCommand.CreateSaleItem(PRODUCT_ID, "Test", "TST",
                         100, BigDecimal.TEN)));
 
-        assertThrows(StockShortageException.class, () -> useCase.execute(command));
+        // Act & Assert
+        assertThrows(StockShortageException.class, () -> useCase.execute(command),
+                "Insufficient stock should throw StockShortageException");
         verify(saleRepository, never()).save(any());
     }
 
-    // Scenario 5: Non-existent product → InvalidSaleDataException
     @Test
+    @DisplayName("Should throw when product not found")
     void shouldThrowWhenProductNotFound() {
+        // Arrange
         when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.empty());
 
         CreateSaleCommand command = new CreateSaleCommand(TENANT_ID, "user-1",
                 List.of(new CreateSaleCommand.CreateSaleItem(PRODUCT_ID, "Test", "TST",
                         10, BigDecimal.TEN)));
 
-        assertThrows(InvalidSaleDataException.class, () -> useCase.execute(command));
+        // Act & Assert
+        assertThrows(InvalidSaleDataException.class, () -> useCase.execute(command),
+                "Non-existent product should throw InvalidSaleDataException");
         verifyNoInteractions(batchAllocator);
     }
 
-    // Scenario 6: Deactivated product → ProductNotActiveException
     @Test
+    @DisplayName("Should throw when product is deactivated")
     void shouldThrowWhenProductDeactivated() {
+        // Arrange
         Product product = Product.register(TENANT_ID, "Test", "unit", EXP, MFR);
         product.deactivate();
         when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(product));
@@ -122,22 +133,28 @@ class CreateSaleUseCaseTest {
                 List.of(new CreateSaleCommand.CreateSaleItem(PRODUCT_ID, "Test", "TST",
                         10, BigDecimal.TEN)));
 
-        assertThrows(ProductNotActiveException.class, () -> useCase.execute(command));
+        // Act & Assert
+        assertThrows(ProductNotActiveException.class, () -> useCase.execute(command),
+                "Deactivated product should throw ProductNotActiveException");
     }
 
-    // Scenario 7: Quantity = 0 → InvalidSaleDataException
     @Test
+    @DisplayName("Should throw when item quantity is zero")
     void shouldThrowWhenQuantityIsZero() {
+        // Arrange
         CreateSaleCommand command = new CreateSaleCommand(TENANT_ID, "user-1",
                 List.of(new CreateSaleCommand.CreateSaleItem(PRODUCT_ID, "Test", "TST",
                         0, BigDecimal.TEN)));
 
-        assertThrows(InvalidSaleDataException.class, () -> useCase.execute(command));
+        // Act & Assert
+        assertThrows(InvalidSaleDataException.class, () -> useCase.execute(command),
+                "Zero quantity should throw InvalidSaleDataException");
     }
 
-    // Scenario 9: Multi-item — partial failure causes full rollback
     @Test
+    @DisplayName("Should rollback entire sale when one product fails")
     void shouldRollbackWhenOneProductFails() {
+        // Arrange
         UUID productId2 = UUID.randomUUID();
         Product product1 = Product.register(TENANT_ID, "Product A", "unit", EXP, MFR);
         when(productRepository.findById(PRODUCT_ID)).thenReturn(Optional.of(product1));
@@ -147,7 +164,6 @@ class CreateSaleUseCaseTest {
                         BigDecimal.valueOf(50.00), LocalDate.of(2027, Month.JUNE, 1))));
         when(batchAllocator.allocate(PRODUCT_ID, 10)).thenReturn(allocOk);
 
-        // Second product not found — triggers rollback
         when(productRepository.findById(productId2)).thenReturn(Optional.empty());
 
         CreateSaleCommand command = new CreateSaleCommand(TENANT_ID, "user-1",
@@ -156,8 +172,9 @@ class CreateSaleUseCaseTest {
                         new CreateSaleCommand.CreateSaleItem(productId2, "B", "B", 5, BigDecimal.TEN)
                 ));
 
-        assertThrows(InvalidSaleDataException.class, () -> useCase.execute(command));
-        // BatchAllocator should have been called for product 1 but sale never saved
+        // Act & Assert
+        assertThrows(InvalidSaleDataException.class, () -> useCase.execute(command),
+                "Partial failure should throw InvalidSaleDataException");
         verify(batchAllocator).allocate(PRODUCT_ID, 10);
         verify(saleRepository, never()).save(any());
     }

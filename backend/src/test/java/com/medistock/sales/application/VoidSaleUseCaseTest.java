@@ -15,6 +15,7 @@ import com.medistock.sales.domain.model.SaleStatus;
 import com.medistock.sales.domain.port.SaleRepository;
 import com.medistock.sales.application.service.VoidSaleUseCase;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -33,6 +34,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("VoidSaleUseCase")
 class VoidSaleUseCaseTest {
 
     @Mock private SaleRepository saleRepository;
@@ -60,50 +62,62 @@ class VoidSaleUseCaseTest {
         completedSale = Sale.create(TENANT_ID, "user-1", List.of(item));
     }
 
-    // Scenario 10: Void completed sale — stock restored
     @Test
+    @DisplayName("Should void completed sale and restore stock")
     void shouldVoidCompletedSale() {
+        // Arrange
         when(saleRepository.findById(SALE_ID)).thenReturn(Optional.of(completedSale));
 
         Batch batch = Batch.receive(TENANT_ID, PRODUCT_ID, "LOT-001", 50,
                 LocalDate.of(2027, Month.JUNE, 18), BigDecimal.valueOf(5.00));
-        batch.allocate(10); // simulate 10 already allocated
+        batch.allocate(10);
         when(batchRepository.findById(BATCH_ID)).thenReturn(Optional.of(batch));
         when(saleRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
+        // Act
         Sale result = useCase.execute(SALE_ID, "Customer return");
 
-        assertEquals(SaleStatus.VOIDED, result.getStatus());
-        assertNotNull(result.getVoidedAt());
-        assertEquals("Customer return", result.getVoidReason());
+        // Assert
+        assertEquals(SaleStatus.VOIDED, result.getStatus(), "status");
+        assertNotNull(result.getVoidedAt(), "voided timestamp");
+        assertEquals("Customer return", result.getVoidReason(), "void reason");
 
         verify(movementRepository).save(any(Movement.class));
         verify(eventPublisher).publishEvent(any(SaleVoidedEvent.class));
     }
 
-    // Scenario 11: Already voided → SaleAlreadyVoidedException
     @Test
+    @DisplayName("Should throw when sale is already voided")
     void shouldThrowWhenAlreadyVoided() {
+        // Arrange
         completedSale.voidSale("Initial void");
         when(saleRepository.findById(SALE_ID)).thenReturn(Optional.of(completedSale));
 
+        // Act & Assert
         assertThrows(SaleAlreadyVoidedException.class,
-                () -> useCase.execute(SALE_ID, "Another void"));
+                () -> useCase.execute(SALE_ID, "Another void"),
+                "Double void should throw SaleAlreadyVoidedException");
         verifyNoInteractions(batchRepository);
     }
 
-    // Not found → SaleNotFoundException
     @Test
+    @DisplayName("Should throw when sale not found")
     void shouldThrowWhenSaleNotFound() {
+        // Arrange
         when(saleRepository.findById(SALE_ID)).thenReturn(Optional.empty());
+
+        // Act & Assert
         assertThrows(SaleNotFoundException.class,
-                () -> useCase.execute(SALE_ID, "reason"));
+                () -> useCase.execute(SALE_ID, "reason"),
+                "Non-existent sale should throw SaleNotFoundException");
     }
 
-    // Blank reason → InvalidSaleDataException
     @Test
+    @DisplayName("Should throw when void reason is blank")
     void shouldThrowWhenReasonIsBlank() {
+        // Act & Assert
         assertThrows(InvalidSaleDataException.class,
-                () -> useCase.execute(SALE_ID, ""));
+                () -> useCase.execute(SALE_ID, ""),
+                "Blank reason should throw InvalidSaleDataException");
     }
 }

@@ -92,6 +92,7 @@ public class Batch implements AggregateRoot {
      * Reconstruct a Batch from persisted state (no validation).
      * Public for repository use — not intended for domain logic callers.
      */
+    @SuppressWarnings("java:S107")
     public static Batch restore(UUID id, String tenantId, UUID productId, String batchCode,
                           int initialQuantity, int currentQuantity, LocalDate expirationDate,
                           LocalDate manufacturingDate, BigDecimal costPerUnit,

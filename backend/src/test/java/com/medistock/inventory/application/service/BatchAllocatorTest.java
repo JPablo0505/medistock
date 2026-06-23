@@ -6,6 +6,7 @@ import com.medistock.inventory.domain.service.FefoQuerySpecification;
 import com.medistock.inventory.domain.port.BatchRepository;
 import com.medistock.inventory.domain.port.MovementRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -25,6 +26,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("BatchAllocator")
 class BatchAllocatorTest {
 
     private static final String TENANT = "tenant-1";
@@ -51,64 +53,83 @@ class BatchAllocatorTest {
     }
 
     @Test
+    @DisplayName("Should allocate from single batch")
     void shouldAllocateFromSingleBatch() {
+        // Arrange
         when(fefoQuery.findAvailableByProductOrderedByExpiry(PRODUCT_ID))
                 .thenReturn(List.of(batch1));
         when(batchRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
+        // Act
         AllocationResult result = allocator.allocate(PRODUCT_ID, 30);
 
-        assertTrue(result.fullyAllocated());
-        assertEquals(30, result.totalAllocated());
-        assertEquals(1, result.lines().size());
+        // Assert
+        assertTrue(result.fullyAllocated(), "fully allocated");
+        assertEquals(30, result.totalAllocated(), "total allocated");
+        assertEquals(1, result.lines().size(), "allocation lines count");
         verify(batchRepository, times(1)).save(any());
         verify(movementRepository, times(1)).save(any());
     }
 
     @Test
+    @DisplayName("Should allocate from multiple batches")
     void shouldAllocateFromMultipleBatches() {
+        // Arrange
         when(fefoQuery.findAvailableByProductOrderedByExpiry(PRODUCT_ID))
                 .thenReturn(List.of(batch1, batch2));
         when(batchRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
+        // Act
         AllocationResult result = allocator.allocate(PRODUCT_ID, 120);
 
-        assertTrue(result.fullyAllocated());
-        assertEquals(120, result.totalAllocated());
-        assertEquals(2, result.lines().size());
+        // Assert
+        assertTrue(result.fullyAllocated(), "fully allocated");
+        assertEquals(120, result.totalAllocated(), "total allocated");
+        assertEquals(2, result.lines().size(), "allocation lines count");
         verify(batchRepository, times(2)).save(any());
         verify(movementRepository, times(2)).save(any());
     }
 
     @Test
+    @DisplayName("Should record allocated movements")
     void shouldRecordAllocatedMovements() {
+        // Arrange
         when(fefoQuery.findAvailableByProductOrderedByExpiry(PRODUCT_ID))
                 .thenReturn(List.of(batch1));
         when(batchRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
+        // Act
         allocator.allocate(PRODUCT_ID, 30);
 
+        // Assert
         verify(movementRepository, times(1)).save(movementCaptor.capture());
         Movement movement = movementCaptor.getValue();
-        assertEquals(MovementType.ALLOCATED, movement.getType());
-        assertEquals(-30, movement.getQuantity());
-        assertEquals(batch1.getId(), movement.getBatchId());
+        assertEquals(MovementType.ALLOCATED, movement.getType(), "movement type");
+        assertEquals(-30, movement.getQuantity(), "movement quantity");
+        assertEquals(batch1.getId(), movement.getBatchId(), "batch id");
     }
 
     @Test
+    @DisplayName("Should throw when insufficient stock")
     void shouldThrowWhenInsufficientStock() {
+        // Arrange
         when(fefoQuery.findAvailableByProductOrderedByExpiry(PRODUCT_ID))
                 .thenReturn(List.of(batch1));
 
+        // Act & Assert
         assertThrows(StockShortageException.class, () ->
-                allocator.allocate(PRODUCT_ID, 100));
+                allocator.allocate(PRODUCT_ID, 100),
+                "Insufficient stock should throw StockShortageException");
     }
 
     @Test
+    @DisplayName("Should not save anything when stock shortage")
     void shouldNotSaveAnythingWhenShortage() {
+        // Arrange
         when(fefoQuery.findAvailableByProductOrderedByExpiry(PRODUCT_ID))
                 .thenReturn(List.of(batch1));
 
+        // Act & Assert
         assertThrows(StockShortageException.class, () ->
                 allocator.allocate(PRODUCT_ID, 200));
 
@@ -117,18 +138,19 @@ class BatchAllocatorTest {
     }
 
     @Test
+    @DisplayName("Should propagate OptimisticLockingFailureException")
     void shouldPropagateExceptionOnOptimisticLockFailure() {
-        // @Retryable requires Spring AOP proxy, but with MockitoExtension
-        // we test the raw behavior: OptimisticLockingFailureException propagates
+        // Arrange
         when(fefoQuery.findAvailableByProductOrderedByExpiry(PRODUCT_ID))
                 .thenReturn(List.of(batch1));
         when(batchRepository.save(any()))
                 .thenThrow(new OptimisticLockingFailureException("lock conflict"));
 
+        // Act & Assert
         assertThrows(OptimisticLockingFailureException.class, () ->
-                allocator.allocate(PRODUCT_ID, 30));
+                allocator.allocate(PRODUCT_ID, 30),
+                "Optimistic lock failure should propagate");
 
-        // Without AOP proxy, save is called only once before the exception propagates
         verify(batchRepository, times(1)).save(any());
     }
 }

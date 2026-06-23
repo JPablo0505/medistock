@@ -92,6 +92,7 @@ public class Sale implements AggregateRoot {
         );
     }
 
+    @SuppressWarnings("java:S107")
     public static Sale restore(UUID saleId, String tenantId, LocalDateTime saleDate, SaleType saleType,
                                List<SaleItem> items, BigDecimal subtotal, BigDecimal total,
                                String performedBy, SaleStatus status,

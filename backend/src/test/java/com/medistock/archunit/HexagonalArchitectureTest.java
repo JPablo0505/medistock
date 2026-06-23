@@ -3,18 +3,14 @@ package com.medistock.archunit;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 
-/**
- * Enforces hexagonal architecture boundaries at package level.
- *
- * <p>Rules mirror the dependency constraints documented in
- * {@code docs/design/technical-design.md §10}.</p>
- */
+@DisplayName("Hexagonal architecture rules")
 class HexagonalArchitectureTest {
 
     private static JavaClasses importedClasses;
@@ -25,6 +21,7 @@ class HexagonalArchitectureTest {
     }
 
     @Test
+    @DisplayName("Domain layer must not depend on framework classes")
     void domainLayerMustNotDependOnFramework() {
         noClasses()
                 .that().resideInAnyPackage("..domain..")
@@ -34,6 +31,7 @@ class HexagonalArchitectureTest {
     }
 
     @Test
+    @DisplayName("Application layer must only depend on domain")
     void applicationLayerMustOnlyDependOnDomain() {
         noClasses()
                 .that().resideInAnyPackage("..application..")
@@ -43,6 +41,7 @@ class HexagonalArchitectureTest {
     }
 
     @Test
+    @DisplayName("Infrastructure must not depend on other context infrastructure")
     void infrastructureMustNotDependOnOtherContextInfrastructure() {
         noClasses()
                 .that().resideInAnyPackage("..infrastructure..")
@@ -66,6 +65,7 @@ class HexagonalArchitectureTest {
     }
 
     @Test
+    @DisplayName("FefoAllocationStrategy must be in domain layer")
     void fefoAllocationStrategyMustBeInDomain() {
         classes()
                 .that().haveSimpleName("FefoAllocationStrategy")
@@ -75,6 +75,7 @@ class HexagonalArchitectureTest {
     }
 
     @Test
+    @DisplayName("BatchAllocator must be in application layer")
     void batchAllocatorMustBeInApplication() {
         classes()
                 .that().haveSimpleName("BatchAllocator")
@@ -84,6 +85,7 @@ class HexagonalArchitectureTest {
     }
 
     @Test
+    @DisplayName("Controllers must be in infrastructure.rest package")
     void controllersMustBeInInfrastructureRest() {
         classes()
                 .that().haveSimpleNameEndingWith("Controller")
@@ -92,6 +94,7 @@ class HexagonalArchitectureTest {
     }
 
     @Test
+    @DisplayName("Repository ports are in domain, implementations in infrastructure")
     void repositoryPortsAreInDomainImplementationsInInfrastructure() {
         classes()
                 .that().areInterfaces()
@@ -108,6 +111,7 @@ class HexagonalArchitectureTest {
     }
 
     @Test
+    @DisplayName("Sales application may depend on inventory application")
     void salesApplicationMayDependOnInventoryApplication() {
         noClasses()
                 .that().resideInAnyPackage("com.medistock.inventory..")
@@ -117,6 +121,7 @@ class HexagonalArchitectureTest {
     }
 
     @Test
+    @DisplayName("Sales domain must not depend on inventory domain")
     void salesDomainMustNotDependOnInventoryDomain() {
         noClasses()
                 .that().resideInAnyPackage("com.medistock.sales.domain..")

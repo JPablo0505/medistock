@@ -1,6 +1,9 @@
 package com.medistock.alerts.application;
 
 import com.medistock.alerts.application.service.EvaluateAlertRulesUseCase;
+import com.medistock.alerts.application.service.evaluator.ControlledStockAlertEvaluator;
+import com.medistock.alerts.application.service.evaluator.ExpirationAlertEvaluator;
+import com.medistock.alerts.application.service.evaluator.LowStockAlertEvaluator;
 import com.medistock.alerts.domain.event.AlertTriggeredEvent;
 import com.medistock.alerts.domain.model.*;
 import com.medistock.alerts.domain.port.AlertInstanceRepository;
@@ -52,8 +55,17 @@ class EvaluateAlertRulesUseCaseTest {
 
     @BeforeEach
     void setUp() {
+        var expirationEvaluator = new ExpirationAlertEvaluator(
+                alertInstanceRepository, batchRepository, productRepository);
+        var lowStockEvaluator = new LowStockAlertEvaluator(
+                alertInstanceRepository, batchRepository, productRepository);
+        var controlledEvaluator = new ControlledStockAlertEvaluator(
+                alertInstanceRepository, batchRepository, productRepository);
+
         useCase = new EvaluateAlertRulesUseCase(
-                alertRuleRepository, alertInstanceRepository, batchRepository, productRepository);
+                alertRuleRepository, alertInstanceRepository,
+                batchRepository, productRepository,
+                List.of(expirationEvaluator, lowStockEvaluator, controlledEvaluator));
 
         productExpiringSoon = Product.register(TENANT, "Ibuprofeno 600mg", "Tablet",
                 EXPIRING_SOON, MFR_DATE);
