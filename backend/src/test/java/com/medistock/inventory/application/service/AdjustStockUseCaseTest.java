@@ -26,6 +26,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AdjustStockUseCase")
+@SuppressWarnings("java:S5778")
 class AdjustStockUseCaseTest {
 
     private static final String TENANT = "test-tenant";
@@ -98,7 +99,7 @@ class AdjustStockUseCaseTest {
         var result = useCase.execute(activeBatch.getId(), 0, "Fully depleted");
 
         // Assert
-        assertThat(result.getCurrentQuantity()).as("depleted quantity").isEqualTo(0);
+        assertThat(result.getCurrentQuantity()).as("depleted quantity").isZero();
         assertThat(result.getStatus()).as("depleted status").isEqualTo(BatchStatus.DEPLETED);
     }
 

@@ -25,6 +25,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ReleaseFromQuarantineUseCase")
+@SuppressWarnings("java:S5778")
 class ReleaseFromQuarantineUseCaseTest {
 
     private static final String TENANT = "test-tenant";
@@ -67,7 +68,7 @@ class ReleaseFromQuarantineUseCaseTest {
         verify(movementRepository).save(movementCaptor.capture());
         Movement movement = movementCaptor.getValue();
         assertThat(movement.getType()).as("movement type").isEqualTo(MovementType.QUARANTINE_OUT);
-        assertThat(movement.getQuantity()).as("movement quantity").isEqualTo(0);
+        assertThat(movement.getQuantity()).as("movement quantity").isZero();
     }
 
     @Test

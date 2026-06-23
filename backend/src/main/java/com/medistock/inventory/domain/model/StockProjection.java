@@ -18,6 +18,7 @@ public class StockProjection {
     private final int totalBatches;
     private final LocalDate nearestExpiryDate;
 
+    @SuppressWarnings("java:S107")
     public StockProjection(UUID productId, int totalQuantity, int availableQuantity,
                            int quarantinedQuantity, int expiredQuantity, int disposedQuantity,
                            int totalBatches, LocalDate nearestExpiryDate) {

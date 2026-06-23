@@ -81,6 +81,6 @@ class StockProjectionTest {
 
         assertEquals(220, projection.getTotalQuantity());
         assertTrue(projection.getAvailableQuantity() > 0, "should have available stock");
-        assertTrue(projection.getNearestExpiryDate() != null, "should have a nearest expiry");
+        assertNotNull(projection.getNearestExpiryDate(), "should have a nearest expiry");
     }
 }

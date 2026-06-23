@@ -1,13 +1,11 @@
 package com.medistock.sales.infrastructure.persistence;
 
-import com.medistock.sales.domain.exception.SaleNotFoundException;
 import com.medistock.sales.domain.model.BatchAllocation;
 import com.medistock.sales.domain.model.Sale;
 import com.medistock.sales.domain.model.SaleItem;
 import com.medistock.sales.domain.model.SaleStatus;
 import com.medistock.sales.domain.model.SaleType;
 import com.medistock.sales.domain.port.SaleRepository;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -17,8 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;

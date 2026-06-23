@@ -39,6 +39,7 @@ public class AlertController {
     private final ProductRepository productRepository;
     private final BatchRepository batchRepository;
 
+    @SuppressWarnings("java:S107")
     public AlertController(CreateAlertRuleUseCase createAlertRuleUseCase,
                            UpdateAlertRuleUseCase updateAlertRuleUseCase,
                            EvaluateAlertRulesUseCase evaluateAlertRulesUseCase,

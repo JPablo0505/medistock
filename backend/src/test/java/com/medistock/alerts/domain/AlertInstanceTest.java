@@ -10,13 +10,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.*;
 
 @DisplayName("AlertInstance domain entity")
+@SuppressWarnings("java:S5778")
 class AlertInstanceTest {
-
-    private AlertInstance createDefaultInstance() {
-        return new AlertInstance(
-                "default", UUID.randomUUID(), UUID.randomUUID(), null,
-                AlertSeverity.LOW, "msg");
-    }
 
     @Test
     @DisplayName("Should create active instance with provided values")

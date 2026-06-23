@@ -9,7 +9,6 @@ import com.medistock.alerts.domain.model.*;
 import com.medistock.alerts.domain.port.AlertInstanceRepository;
 import com.medistock.alerts.domain.port.AlertRuleRepository;
 import com.medistock.inventory.domain.model.Batch;
-import com.medistock.inventory.domain.model.BatchStatus;
 import com.medistock.inventory.domain.port.BatchRepository;
 import com.medistock.productcatalog.domain.model.Product;
 import com.medistock.productcatalog.domain.port.ProductRepository;

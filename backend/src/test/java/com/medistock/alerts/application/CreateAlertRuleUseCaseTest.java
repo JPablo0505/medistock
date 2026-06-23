@@ -2,7 +2,6 @@ package com.medistock.alerts.application;
 
 import com.medistock.alerts.application.service.CreateAlertRuleUseCase;
 import com.medistock.alerts.domain.exception.InvalidAlertRuleException;
-import com.medistock.alerts.domain.model.AlertRule;
 import com.medistock.alerts.domain.model.AlertRuleType;
 import com.medistock.alerts.domain.port.AlertRuleRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +19,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CreateAlertRuleUseCase")
+@SuppressWarnings("java:S5778")
 class CreateAlertRuleUseCaseTest {
 
     @Mock

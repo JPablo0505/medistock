@@ -2,12 +2,11 @@ package com.medistock.alerts.infrastructure.rest.dto;
 
 import com.medistock.alerts.domain.model.AlertInstance;
 import com.medistock.alerts.domain.model.AlertSeverity;
-import com.medistock.alerts.domain.model.AlertInstanceStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -49,7 +48,7 @@ class AlertInstanceResponseTest {
                 AlertSeverity.LOW, "Low stock");
         var enrichment = new AlertInstanceResponse.ProductEnrichment(
                 "Ibuprofeno", "Tablet", "MediCorp",
-                150, LocalDate.of(2026, 12, 31));
+                150, LocalDate.of(2026, Month.DECEMBER, 31));
 
         // Act
         var response = AlertInstanceResponse.from(instance, enrichment);
@@ -59,7 +58,7 @@ class AlertInstanceResponseTest {
         assertEquals("Tablet", response.productDosageForm(), "dosage form");
         assertEquals("MediCorp", response.productManufacturer(), "manufacturer");
         assertEquals(150, response.productStock(), "stock");
-        assertEquals(LocalDate.of(2026, 12, 31), response.productExpirationDate(), "expiration");
+        assertEquals(LocalDate.of(2026, Month.DECEMBER, 31), response.productExpirationDate(), "expiration");
         assertEquals("LOW", response.severity(), "severity");
     }
 

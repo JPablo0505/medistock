@@ -29,6 +29,7 @@ public class BatchController {
     private final MovementRepository movementRepository;
     private final ProductRepository productRepository;
 
+    @SuppressWarnings("java:S107")
     public BatchController(ReceiveStockUseCase receiveStockUseCase,
                             AdjustStockUseCase adjustStockUseCase,
                             QuarantineUseCase quarantineUseCase,

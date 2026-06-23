@@ -10,6 +10,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("Batch domain entity")
+@SuppressWarnings("java:S5778")
 class BatchTest {
 
     private static final String TENANT = "tenant-1";

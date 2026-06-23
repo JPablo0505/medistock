@@ -10,6 +10,7 @@ public interface SaleRepository {
     Sale save(Sale sale);
     List<Sale> findAll();
     List<Sale> findByTenant(String tenantId, int page, int size, String sort);
+    @SuppressWarnings("java:S107")
     List<Sale> findByTenantWithFilters(String tenantId, UUID productId, String status,
                                        String dateFrom, String dateTo,
                                        int page, int size, String sort);

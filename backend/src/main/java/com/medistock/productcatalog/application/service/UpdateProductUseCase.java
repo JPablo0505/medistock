@@ -18,6 +18,7 @@ public class UpdateProductUseCase {
         this.productRepository = productRepository;
     }
 
+    @SuppressWarnings("java:S107")
     @Transactional
     public ProductDTO execute(UUID id, String name, String genericName, UUID categoryId,
                                String concentration, String dosageForm, String manufacturer,

@@ -26,6 +26,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("WriteOffUseCase")
+@SuppressWarnings("java:S5778")
 class WriteOffUseCaseTest {
 
     private static final String TENANT = "test-tenant";
@@ -63,7 +64,7 @@ class WriteOffUseCaseTest {
 
         // Assert
         assertThat(result.getStatus()).as("status after dispose").isEqualTo(BatchStatus.DISPOSED);
-        assertThat(result.getCurrentQuantity()).as("current quantity after dispose").isEqualTo(0);
+        assertThat(result.getCurrentQuantity()).as("current quantity after dispose").isZero();
         verify(movementRepository).save(movementCaptor.capture());
         Movement movement = movementCaptor.getValue();
         assertThat(movement.getType()).as("movement type").isEqualTo(MovementType.WRITE_OFF);

@@ -1,7 +1,6 @@
 package com.medistock.inventory.application.service;
 
 import com.medistock.inventory.domain.model.Batch;
-import com.medistock.inventory.domain.model.BatchStatus;
 import com.medistock.inventory.domain.port.BatchRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -56,8 +55,8 @@ class GetStockSummaryUseCaseTest {
         assertThat(result.getTotalQuantity()).as("total quantity").isEqualTo(170);
         assertThat(result.getAvailableQuantity()).as("available quantity").isEqualTo(150);
         assertThat(result.getQuarantinedQuantity()).as("quarantined quantity").isEqualTo(20);
-        assertThat(result.getExpiredQuantity()).as("expired quantity").isEqualTo(0);
-        assertThat(result.getDisposedQuantity()).as("disposed quantity").isEqualTo(0);
+        assertThat(result.getExpiredQuantity()).as("expired quantity").isZero();
+        assertThat(result.getDisposedQuantity()).as("disposed quantity").isZero();
         assertThat(result.getTotalBatches()).as("total batches").isEqualTo(3);
         assertThat(result.getNearestExpiryDate()).as("nearest expiry").isEqualTo(EXPIRY_2026);
     }
@@ -80,7 +79,7 @@ class GetStockSummaryUseCaseTest {
 
         // Assert
         assertThat(result.getExpiredQuantity()).as("expired quantity").isEqualTo(30);
-        assertThat(result.getDisposedQuantity()).as("disposed quantity").isEqualTo(0);
+        assertThat(result.getDisposedQuantity()).as("disposed quantity").isZero();
         assertThat(result.getNearestExpiryDate()).as("nearest expiry").isEqualTo(EXPIRY_2027);
     }
 
@@ -94,10 +93,10 @@ class GetStockSummaryUseCaseTest {
         var result = useCase.execute(PRODUCT_ID);
 
         // Assert
-        assertThat(result.getTotalQuantity()).as("total quantity").isEqualTo(0);
-        assertThat(result.getAvailableQuantity()).as("available quantity").isEqualTo(0);
-        assertThat(result.getQuarantinedQuantity()).as("quarantined quantity").isEqualTo(0);
-        assertThat(result.getTotalBatches()).as("total batches").isEqualTo(0);
+        assertThat(result.getTotalQuantity()).as("total quantity").isZero();
+        assertThat(result.getAvailableQuantity()).as("available quantity").isZero();
+        assertThat(result.getQuarantinedQuantity()).as("quarantined quantity").isZero();
+        assertThat(result.getTotalBatches()).as("total batches").isZero();
         assertThat(result.getNearestExpiryDate()).as("nearest expiry").isNull();
     }
 
@@ -113,8 +112,8 @@ class GetStockSummaryUseCaseTest {
         var result = useCase.execute(PRODUCT_ID);
 
         // Assert
-        assertThat(result.getTotalQuantity()).as("total quantity").isEqualTo(0);
-        assertThat(result.getAvailableQuantity()).as("available quantity").isEqualTo(0);
+        assertThat(result.getTotalQuantity()).as("total quantity").isZero();
+        assertThat(result.getAvailableQuantity()).as("available quantity").isZero();
         assertThat(result.getTotalBatches()).as("total batches").isEqualTo(1);
     }
 

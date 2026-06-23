@@ -35,6 +35,7 @@ public class ReceiveStockUseCase {
         this.eventPublisher = eventPublisher;
     }
 
+    @SuppressWarnings("java:S107")
     public Batch execute(UUID productId, String batchCode, int quantity,
                          LocalDate expirationDate, BigDecimal costPerUnit,
                          LocalDate manufacturingDate, String category, String notes) {

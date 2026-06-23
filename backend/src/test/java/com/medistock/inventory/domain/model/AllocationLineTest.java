@@ -10,6 +10,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("AllocationLine record")
+@SuppressWarnings("java:S5778")
 class AllocationLineTest {
 
     private static final UUID BATCH_ID = UUID.randomUUID();

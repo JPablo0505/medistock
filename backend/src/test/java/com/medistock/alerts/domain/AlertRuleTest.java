@@ -11,6 +11,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.*;
 
 @DisplayName("AlertRule domain entity")
+@SuppressWarnings("java:S5778")
 class AlertRuleTest {
 
     private final String tenantId = "tenant-1";

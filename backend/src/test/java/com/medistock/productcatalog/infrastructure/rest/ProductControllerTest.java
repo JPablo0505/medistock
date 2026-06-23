@@ -23,7 +23,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.medistock.productcatalog.application.service.ProductDTO;
 import org.springframework.http.MediaType;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.List;
@@ -31,7 +30,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -188,7 +186,7 @@ class ProductControllerTest {
                 any(), any())).thenReturn(sampleDTO);
         when(updateUseCase.execute(sampleProduct.getId(), "Ibuprofeno", null, null, null,
                 "Tablet", null, false, false, null, "Tablet", null, null, null,
-                LocalDate.of(2026, 12, 31), LocalDate.of(2025, 1, 1)))
+                LocalDate.of(2026, Month.DECEMBER, 31), LocalDate.of(2025, Month.JANUARY, 1)))
                 .thenReturn(sampleDTO);
 
         // Act & Assert
@@ -213,7 +211,7 @@ class ProductControllerTest {
         // Arrange
         when(updateUseCase.execute(sampleProduct.getId(), "Ibuprofeno Updated", null, null, null,
                 "Tablet", null, false, false, null, "Tablet", null, null, null,
-                LocalDate.of(2027, 6, 30), LocalDate.of(2025, 1, 1)))
+                LocalDate.of(2027, Month.JUNE, 30), LocalDate.of(2025, Month.JANUARY, 1)))
                 .thenReturn(sampleDTO);
 
         // Act & Assert

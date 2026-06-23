@@ -26,6 +26,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("QuarantineUseCase")
+@SuppressWarnings("java:S5778")
 class QuarantineUseCaseTest {
 
     private static final String TENANT = "test-tenant";

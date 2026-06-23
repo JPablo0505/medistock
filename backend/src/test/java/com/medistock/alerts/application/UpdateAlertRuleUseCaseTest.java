@@ -22,6 +22,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UpdateAlertRuleUseCase")
+@SuppressWarnings("java:S5778")
 class UpdateAlertRuleUseCaseTest {
 
     @Mock

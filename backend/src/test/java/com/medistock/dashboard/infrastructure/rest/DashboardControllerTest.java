@@ -107,11 +107,11 @@ class DashboardControllerTest {
         var json = objectMapper.readTree(result.getResponse().getContentAsString());
 
         // Assert
-        assertThat(json.get("totalProducts").asLong()).as("totalProducts").isEqualTo(0);
-        assertThat(json.get("activeProducts").asLong()).as("activeProducts").isEqualTo(0);
-        assertThat(json.get("activeBatches").asLong()).as("activeBatches").isEqualTo(0);
-        assertThat(json.get("activeAlerts").asLong()).as("activeAlerts").isEqualTo(0);
-        assertThat(json.get("expiringSoonBatches").asLong()).as("expiringSoonBatches").isEqualTo(0);
+        assertThat(json.get("totalProducts").asLong()).as("totalProducts").isZero();
+        assertThat(json.get("activeProducts").asLong()).as("activeProducts").isZero();
+        assertThat(json.get("activeBatches").asLong()).as("activeBatches").isZero();
+        assertThat(json.get("activeAlerts").asLong()).as("activeAlerts").isZero();
+        assertThat(json.get("expiringSoonBatches").asLong()).as("expiringSoonBatches").isZero();
     }
 
     @Test
@@ -120,10 +120,10 @@ class DashboardControllerTest {
         // Arrange
         TenantContext.clear();
 
-        when(productRepo.countByTenantId(eq("default"))).thenReturn(10L);
-        when(productRepo.countByTenantIdAndIsActive(eq("default"), eq(true))).thenReturn(5L);
-        when(batchRepo.countByTenantIdAndStatus(eq("default"), eq("ACTIVE"))).thenReturn(3L);
-        when(alertRepo.countByTenantIdAndStatus(eq("default"), eq("ACTIVE"))).thenReturn(1L);
+        when(productRepo.countByTenantId("default")).thenReturn(10L);
+        when(productRepo.countByTenantIdAndIsActive("default", true)).thenReturn(5L);
+        when(batchRepo.countByTenantIdAndStatus("default", "ACTIVE")).thenReturn(3L);
+        when(alertRepo.countByTenantIdAndStatus("default", "ACTIVE")).thenReturn(1L);
         when(batchRepo.countByTenantIdAndStatusAndExpirationDateBetween(
                 eq("default"), eq("ACTIVE"), any(LocalDate.class), any(LocalDate.class)))
                 .thenReturn(0L);

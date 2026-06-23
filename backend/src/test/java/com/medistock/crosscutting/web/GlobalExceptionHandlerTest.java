@@ -2,7 +2,6 @@ package com.medistock.crosscutting.web;
 
 import com.medistock.inventory.domain.model.InventoryDomainException;
 import com.medistock.productcatalog.domain.model.ProductNotFoundException;
-import com.medistock.shared.domain.DomainException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

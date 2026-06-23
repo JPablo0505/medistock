@@ -1,7 +1,6 @@
 package com.medistock.sales.application.service;
 
 import com.medistock.inventory.application.service.BatchAllocator;
-import com.medistock.inventory.domain.model.AllocationLine;
 import com.medistock.inventory.domain.model.AllocationResult;
 import com.medistock.productcatalog.domain.model.Product;
 import com.medistock.productcatalog.domain.port.ProductRepository;

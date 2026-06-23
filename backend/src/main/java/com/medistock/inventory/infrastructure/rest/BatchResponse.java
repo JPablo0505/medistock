@@ -1,7 +1,6 @@
 package com.medistock.inventory.infrastructure.rest;
 
 import com.medistock.inventory.domain.model.Batch;
-import com.medistock.inventory.domain.model.StockProjection;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;

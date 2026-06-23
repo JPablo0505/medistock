@@ -25,6 +25,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ReceiveStockUseCase")
+@SuppressWarnings("java:S5778")
 class ReceiveStockUseCaseTest {
 
     private static final String TENANT = "test-tenant";

@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("Money value object")
+@SuppressWarnings("java:S5778")
 class MoneyTest {
 
     @Test

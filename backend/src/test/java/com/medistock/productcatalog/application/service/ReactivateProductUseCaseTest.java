@@ -21,6 +21,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ReactivateProductUseCase")
+@SuppressWarnings("java:S5778")
 class ReactivateProductUseCaseTest {
 
     private static final LocalDate EXP = LocalDate.of(2026, Month.DECEMBER, 31);

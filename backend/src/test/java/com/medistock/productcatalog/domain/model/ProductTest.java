@@ -10,6 +10,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("Product domain entity")
+@SuppressWarnings("java:S5778")
 class ProductTest {
 
     private static final LocalDate EXP = LocalDate.of(2026, Month.DECEMBER, 31);

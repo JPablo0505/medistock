@@ -18,6 +18,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("Sale domain entity")
+@SuppressWarnings("java:S5778")
 class SaleTest {
 
     private static final UUID PRODUCT_ID = UUID.randomUUID();

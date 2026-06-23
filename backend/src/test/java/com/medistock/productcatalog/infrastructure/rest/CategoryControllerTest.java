@@ -122,7 +122,7 @@ class CategoryControllerTest {
         // Arrange
         TenantContext.clear();
         Category cat = Category.create("default", "Genéricos", "Generic drugs");
-        when(categoryRepository.findByTenantId(eq("default"))).thenReturn(List.of(cat));
+        when(categoryRepository.findByTenantId("default")).thenReturn(List.of(cat));
 
         // Act & Assert
         mockMvc.perform(get("/api/v1/categories"))

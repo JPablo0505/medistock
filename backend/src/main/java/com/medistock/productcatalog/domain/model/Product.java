@@ -75,6 +75,7 @@ public class Product implements AggregateRoot {
         return new Product(id, tenantId, name.trim(), unit.trim(), imageUrl, expirationDate, manufacturingDate);
     }
 
+    @SuppressWarnings("java:S107")
     public void update(String name, String genericName, UUID categoryId,
                        String concentration, String dosageForm, String manufacturer,
                        boolean requiresPrescription, boolean isControlled,

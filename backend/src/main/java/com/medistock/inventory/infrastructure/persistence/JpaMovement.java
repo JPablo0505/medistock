@@ -3,7 +3,6 @@ package com.medistock.inventory.infrastructure.persistence;
 import com.medistock.shared.infrastructure.BaseEntity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 /**
  * JPA entity for inventory movements (immutable append-only ledger).
