@@ -59,41 +59,34 @@ public class CreateSaleUseCase {
     }
 
     private SaleItem createSaleItem(CreateSaleCommand.CreateSaleItem item) {
-        if (item.quantity() <= 0) {
-            throw new InvalidSaleDataException("Item quantity must be > 0 for product " + item.productId());
-        }
-
-        // Validate product exists and is active
+        validateItem(item);
         Product product = productRepository.findById(item.productId())
-                .orElseThrow(() -> new InvalidSaleDataException(
-                        "Product not found: " + item.productId()));
-        if (!product.isActive()) {
-            throw new ProductNotActiveException(item.productId());
-        }
+                .orElseThrow(() -> new InvalidSaleDataException("Product not found: " + item.productId()));
+        if (!product.isActive()) throw new ProductNotActiveException(item.productId());
 
-        // SAL-R04: FEFO allocation via BatchAllocator (one call per product)
-        AllocationResult allocation = batchAllocator.allocate(
-                item.productId(), item.quantity());
+        AllocationResult allocation = batchAllocator.allocate(item.productId(), item.quantity());
+        List<BatchAllocation> batchAllocations = mapAllocations(allocation);
 
-        // Map AllocationLine to domain BatchAllocation
-        List<BatchAllocation> batchAllocations = allocation.lines().stream()
+        return new SaleItem(
+                item.productId(),
+                item.productName() != null ? item.productName() : product.getName(),
+                item.productSku() != null ? item.productSku() : "",
+                item.quantity(), item.unitPrice(), batchAllocations);
+    }
+
+    private void validateItem(CreateSaleCommand.CreateSaleItem item) {
+        if (item.quantity() <= 0)
+            throw new InvalidSaleDataException("Item quantity must be > 0 for product " + item.productId());
+    }
+
+    private List<BatchAllocation> mapAllocations(AllocationResult allocation) {
+        return allocation.lines().stream()
                 .map(line -> new BatchAllocation(
                         line.batchId(),
                         line.batchCode() != null ? line.batchCode() : "",
                         line.expirationDate() != null ? line.expirationDate() : java.time.LocalDate.now(Clock.systemDefaultZone()),
                         line.quantityAllocated(),
-                        line.unitCost() != null ? line.unitCost() : java.math.BigDecimal.ZERO
-                ))
+                        line.unitCost() != null ? line.unitCost() : java.math.BigDecimal.ZERO))
                 .toList();
-
-        // Snapshot product info at time of sale (SAL-R06, SAL-R12)
-        return new SaleItem(
-                item.productId(),
-                item.productName() != null ? item.productName() : product.getName(),
-                item.productSku() != null ? item.productSku() : "",
-                item.quantity(),
-                item.unitPrice(),
-                batchAllocations
-        );
     }
 }

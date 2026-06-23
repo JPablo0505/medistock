@@ -40,51 +40,42 @@ public class VoidSaleUseCase {
 
     @Transactional
     public Sale execute(UUID saleId, String reason) {
-        if (reason == null || reason.isBlank()) {
+        if (reason == null || reason.isBlank())
             throw new InvalidSaleDataException("voidReason must not be blank");
-        }
 
         Sale sale = saleRepository.findById(saleId)
                 .orElseThrow(() -> new SaleNotFoundException(saleId));
-
-        if (sale.getStatus() == SaleStatus.VOIDED) {
+        if (sale.getStatus() == SaleStatus.VOIDED)
             throw new SaleAlreadyVoidedException(saleId);
-        }
 
-        // Reverse each batch allocation: restore stock + create RETURN movement
-        for (SaleItem item : sale.getItems()) {
-            for (BatchAllocation alloc : item.getBatchAllocations()) {
-                // Restore batch quantity
-                Batch batch = batchRepository.findById(alloc.batchId())
-                        .orElseThrow(() -> new RuntimeException("Batch not found: " + alloc.batchId()));
-
-                int previousQuantity = batch.getCurrentQuantity();
-                batch.restoreQuantity(alloc.allocatedQuantity());
-                batchRepository.save(batch);
-
-                // Create RETURN movement
-                Movement returnMovement = Movement.create(
-                        sale.getTenantId(),
-                        alloc.batchId(),
-                        item.getProductId(),
-                        MovementType.RETURN,
-                        alloc.allocatedQuantity(),
-                        previousQuantity,
-                        batch.getCurrentQuantity(),
-                        "Void sale " + saleId,
-                        sale.getPerformedBy()
-                );
-                movementRepository.save(returnMovement);
-            }
-        }
-
-        // Mark sale as voided
+        reverseAllocations(sale);
         sale.voidSale(reason);
         Sale saved = saleRepository.save(sale);
 
         eventPublisher.publishEvent(new SaleVoidedEvent(
                 saved.getSaleId(), saved.getTenantId(), saved.getVoidReason()));
-
         return saved;
+    }
+
+    private void reverseAllocations(Sale sale) {
+        for (SaleItem item : sale.getItems()) {
+            for (BatchAllocation alloc : item.getBatchAllocations()) {
+                restoreBatchAndCreateMovement(sale, item, alloc);
+            }
+        }
+    }
+
+    private void restoreBatchAndCreateMovement(Sale sale, SaleItem item, BatchAllocation alloc) {
+        Batch batch = batchRepository.findById(alloc.batchId())
+                .orElseThrow(() -> new RuntimeException("Batch not found: " + alloc.batchId()));
+        int previousQuantity = batch.getCurrentQuantity();
+        batch.restoreQuantity(alloc.allocatedQuantity());
+        batchRepository.save(batch);
+
+        movementRepository.save(Movement.create(
+                sale.getTenantId(), alloc.batchId(), item.getProductId(),
+                MovementType.RETURN, alloc.allocatedQuantity(),
+                previousQuantity, batch.getCurrentQuantity(),
+                "Void sale " + sale.getSaleId(), sale.getPerformedBy()));
     }
 }

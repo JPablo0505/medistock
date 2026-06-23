@@ -64,47 +64,39 @@ public class BatchAllocator {
             backoff = @Backoff(delay = 100, multiplier = 2.0, maxDelay = 500)
     )
     public AllocationResult allocate(UUID productId, int requestedQuantity) {
-        String tenantId = TenantContext.getTenantId();
-        if (tenantId == null) tenantId = "default";
-        String performedBy = "admin-user";
-
-        // 1. Query available batches in FEFO order (PESSIMISTIC_READ applied at JPA level)
+        String tenantId = resolveTenantId();
         List<Batch> availableBatches = fefoQuery.findAvailableByProductOrderedByExpiry(productId);
-
-        // 2. Run domain strategy — mutates batches in place
         AllocationResult result = allocationStrategy.allocate(availableBatches, productId, requestedQuantity);
 
-        // 3. Build batch lookup map for persistence
         Map<UUID, Batch> batchMap = availableBatches.stream()
                 .collect(Collectors.toMap(Batch::getId, b -> b));
+        persistAllocations(result, batchMap, productId, tenantId);
 
-        // 4. Persist batch modifications and record movements
+        log.info("FEFO allocation: product={}, requested={}, allocated={}, lines={}",
+                productId, requestedQuantity, result.totalAllocated(), result.lines().size());
+        return result;
+    }
+
+    private String resolveTenantId() {
+        String tenantId = TenantContext.getTenantId();
+        return tenantId != null ? tenantId : "default";
+    }
+
+    private void persistAllocations(AllocationResult result, Map<UUID, Batch> batchMap,
+                                     UUID productId, String tenantId) {
         for (AllocationLine line : result.lines()) {
             Batch modified = batchMap.get(line.batchId());
             if (modified == null) {
                 log.warn("Batch {} not found in allocated set", line.batchId());
                 continue;
             }
-
             batchRepository.save(modified);
-
-            Movement movement = Movement.create(
-                    tenantId,
-                    modified.getId(),
-                    productId,
-                    MovementType.ALLOCATED,
+            movementRepository.save(Movement.create(
+                    tenantId, modified.getId(), productId, MovementType.ALLOCATED,
                     -line.quantityAllocated(),
                     modified.getCurrentQuantity() + line.quantityAllocated(),
                     modified.getCurrentQuantity(),
-                    "FEFO allocation for sale",
-                    performedBy
-            );
-            movementRepository.save(movement);
+                    "FEFO allocation for sale", "admin-user"));
         }
-
-        log.info("FEFO allocation: product={}, requested={}, allocated={}, lines={}",
-                productId, requestedQuantity, result.totalAllocated(), result.lines().size());
-
-        return result;
     }
 }

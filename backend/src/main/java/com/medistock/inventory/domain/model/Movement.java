@@ -48,27 +48,27 @@ public class Movement {
                                     MovementType type, int quantity,
                                     int previousQuantity, int newQuantity,
                                     String reason, String performedBy) {
-        if (tenantId == null || tenantId.isBlank()) {
-            throw new InventoryDomainException("tenantId must not be blank");
-        }
-        if (batchId == null) {
-            throw new InventoryDomainException("batchId must not be null");
-        }
-        if (productId == null) {
-            throw new InventoryDomainException("productId must not be null");
-        }
-        if (type == null) {
-            throw new InventoryDomainException("type must not be null");
-        }
-        if (quantity == 0 && previousQuantity != newQuantity) {
-            throw new InventoryDomainException("quantity must not be zero when stock changes");
-        }
-        if (previousQuantity + quantity != newQuantity) {
-            throw new InventoryDomainException(
-                    "Inconsistent quantities: " + previousQuantity + " + " + quantity + " != " + newQuantity);
-        }
+        validateCreateParams(tenantId, batchId, productId, type, quantity, previousQuantity, newQuantity);
         return new Movement(UUID.randomUUID(), tenantId, batchId, productId,
                 type, quantity, previousQuantity, newQuantity, reason, performedBy);
+    }
+
+    private static void validateCreateParams(String tenantId, UUID batchId, UUID productId,
+                                              MovementType type, int quantity,
+                                              int previousQuantity, int newQuantity) {
+        if (tenantId == null || tenantId.isBlank())
+            throw new InventoryDomainException("tenantId must not be blank");
+        if (batchId == null)
+            throw new InventoryDomainException("batchId must not be null");
+        if (productId == null)
+            throw new InventoryDomainException("productId must not be null");
+        if (type == null)
+            throw new InventoryDomainException("type must not be null");
+        if (quantity == 0 && previousQuantity != newQuantity)
+            throw new InventoryDomainException("quantity must not be zero when stock changes");
+        if (previousQuantity + quantity != newQuantity)
+            throw new InventoryDomainException(
+                    "Inconsistent quantities: " + previousQuantity + " + " + quantity + " != " + newQuantity);
     }
 
     // --- Getters only — immutable ---
