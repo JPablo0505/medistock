@@ -129,18 +129,8 @@ public class ExpirationAlertEvaluator implements AlertRuleEvaluator {
                 .map(Product::getId)
                 .collect(Collectors.toSet());
 
-        List<AlertInstance> activeAlerts = alertInstanceRepository
-                .findByStatus(rule.getTenantId(), AlertInstanceStatus.ACTIVE);
-
-        for (AlertInstance alert : activeAlerts) {
-            if (alert.getAlertRuleId().equals(rule.getId())
-                    && alert.getProductId() != null
-                    && !stillTriggering.contains(alert.getProductId())) {
-                alert.resolve();
-                alertInstanceRepository.save(alert);
-                log.info("Resolved stale expiration alert for product {}", alert.getProductId());
-            }
-        }
+        StaleAlertCleanup.resolveStaleAlerts(alertInstanceRepository, rule, stillTriggering, rule.getTenantId());
+        log.info("Resolved stale expiration alerts for rule {}", rule.getId());
     }
 
     private void saveInstance(AlertTriggeredEvent event, AlertRule rule) {

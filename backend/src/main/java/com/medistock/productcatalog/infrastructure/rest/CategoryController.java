@@ -14,6 +14,13 @@ import java.util.List;
 @RequestMapping("/api/v1/categories")
 public class CategoryController {
 
+    private static final String DEFAULT_TENANT = "default";
+
+    private static String resolveTenantId() {
+        String tenantId = TenantContext.getTenantId();
+        return tenantId != null ? tenantId : DEFAULT_TENANT;
+    }
+
     private final CategoryRepository categoryRepository;
 
     public CategoryController(CategoryRepository categoryRepository) {
@@ -22,8 +29,7 @@ public class CategoryController {
 
     @PostMapping
     public ResponseEntity<CategoryResponse> create(@Valid @RequestBody CreateCategoryRequest request) {
-        String tenantId = TenantContext.getTenantId();
-        if (tenantId == null) tenantId = "default";
+        String tenantId = resolveTenantId();
         Category category = Category.create(tenantId, request.name(), request.description());
         Category saved = categoryRepository.save(category);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -33,8 +39,7 @@ public class CategoryController {
 
     @GetMapping
     public ResponseEntity<List<CategoryResponse>> list() {
-        String tenantId = TenantContext.getTenantId();
-        if (tenantId == null) tenantId = "default";
+        String tenantId = resolveTenantId();
         List<CategoryResponse> categories = categoryRepository.findByTenantId(tenantId).stream()
                 .map(c -> new CategoryResponse(c.getId(), c.getName(),
                         c.getDescription(), null, null))

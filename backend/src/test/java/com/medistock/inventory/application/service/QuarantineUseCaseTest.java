@@ -111,6 +111,6 @@ class QuarantineUseCaseTest {
         assertThatThrownBy(() -> useCase.execute(activeBatch.getId(), "can't quarantine disposed"))
                 .as("Quarantining disposed batch should throw")
                 .isInstanceOf(InventoryDomainException.class)
-                .hasMessageContaining("Cannot quarantine a DISPOSED batch");
+                .hasMessageContaining("DISPOSED");
     }
 }

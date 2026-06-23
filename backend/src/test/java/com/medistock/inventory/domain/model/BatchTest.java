@@ -346,4 +346,147 @@ class BatchTest {
         assertThrows(InventoryDomainException.class, batch::dispose,
                 "Disposing expired batch should throw");
     }
+
+    // ─── State Machine: QUARANTINED transitions ──────────────────────
+
+    @Test
+    @DisplayName("Should throw when allocating from QUARANTINED batch")
+    void shouldThrowWhenAllocateFromQuarantined() {
+        // Arrange
+        Batch batch = createValidBatch();
+        batch.quarantine();
+
+        // Act & Assert
+        assertThrows(InventoryDomainException.class, () -> batch.allocate(1),
+                "Allocating from quarantined batch should throw");
+    }
+
+    @Test
+    @DisplayName("Should throw when allocating from DEPLETED batch")
+    void shouldThrowWhenAllocateFromDepleted() {
+        // Arrange
+        Batch batch = createValidBatch();
+        batch.allocate(100);
+
+        // Act & Assert
+        assertThrows(InventoryDomainException.class, () -> batch.allocate(1),
+                "Allocating from depleted batch should throw");
+    }
+
+    @Test
+    @DisplayName("Should throw when adjusting a DEPLETED batch")
+    void shouldThrowWhenAdjustDepleted() {
+        // Arrange
+        Batch batch = createValidBatch();
+        batch.allocate(100);
+
+        // Act & Assert
+        assertThrows(InventoryDomainException.class, () -> batch.adjustQuantity(50),
+                "Adjusting depleted batch should throw");
+    }
+
+    // ─── State Machine: DISPOSED transitions ─────────────────────────
+
+    @Test
+    @DisplayName("Should throw when marking a DISPOSED batch as expired")
+    void shouldThrowWhenMarkExpiredOnDisposed() {
+        // Arrange
+        Batch batch = createValidBatch();
+        batch.dispose();
+
+        // Act & Assert
+        assertThrows(InventoryDomainException.class, batch::markExpired,
+                "Marking disposed batch as expired should throw");
+    }
+
+    @Test
+    @DisplayName("Should throw when restoring quantity on a DISPOSED batch")
+    void shouldThrowWhenRestoreQuantityOnDisposed() {
+        // Arrange
+        Batch batch = createValidBatch();
+        batch.dispose();
+
+        // Act & Assert
+        assertThrows(InventoryDomainException.class, () -> batch.restoreQuantity(10),
+                "Restoring quantity on disposed batch should throw");
+    }
+
+    // ─── State Machine: DEPLETED restore transitions ─────────────────
+
+    @Test
+    @DisplayName("Should restore DEPLETED batch back to ACTIVE when quantity restored")
+    void shouldRestoreDepletedBatchToActive() {
+        // Arrange
+        Batch batch = createValidBatch();
+        batch.allocate(100);
+
+        // Act
+        batch.restoreQuantity(30);
+
+        // Assert
+        assertEquals(30, batch.getCurrentQuantity(), "current quantity after restore");
+        assertEquals(BatchStatus.ACTIVE, batch.getStatus(), "status should be ACTIVE after restore");
+    }
+
+    @Test
+    @DisplayName("Should restore DEPLETED batch with minimal quantity back to ACTIVE")
+    void shouldRestoreMinimalQuantityToActivate() {
+        // Arrange
+        Batch batch = createValidBatch();
+        batch.allocate(100);
+
+        // Act
+        batch.restoreQuantity(1);
+
+        // Assert
+        assertEquals(1, batch.getCurrentQuantity(), "current quantity after restore");
+        assertEquals(BatchStatus.ACTIVE, batch.getStatus(), "status should become ACTIVE");
+    }
+
+    @Test
+    @DisplayName("Should restore quantity to EXPIRED batch")
+    void shouldRestoreQuantityToExpiredBatch() {
+        // Arrange
+        Batch batch = createValidBatch();
+        batch.markExpired();
+        int before = batch.getCurrentQuantity();
+
+        // Act
+        batch.restoreQuantity(20);
+
+        // Assert
+        assertEquals(before + 20, batch.getCurrentQuantity(), "quantity should increase");
+        assertEquals(BatchStatus.EXPIRED, batch.getStatus(), "status should remain EXPIRED");
+    }
+
+    @Test
+    @DisplayName("Should throw when restoring non-positive quantity")
+    void shouldThrowWhenRestoreNonPositive() {
+        // Arrange
+        Batch batch = createValidBatch();
+
+        // Act & Assert
+        assertThrows(InventoryDomainException.class, () -> batch.restoreQuantity(0),
+                "Restoring zero should throw");
+        assertThrows(InventoryDomainException.class, () -> batch.restoreQuantity(-5),
+                "Restoring negative should throw");
+    }
+
+    // ─── Adjust edge cases ──────────────────────────────────────────
+
+    @Test
+    @DisplayName("Should dispose QUARANTINED batch directly")
+    void shouldDisposeQuarantinedBatch() {
+        // Arrange
+        Batch batch = createValidBatch();
+        batch.quarantine();
+
+        // Act
+        batch.dispose();
+
+        // Assert
+        assertEquals(BatchStatus.DISPOSED, batch.getStatus(), "status should be DISPOSED");
+        assertEquals(0, batch.getCurrentQuantity(), "current quantity should be zero");
+    }
+
 }

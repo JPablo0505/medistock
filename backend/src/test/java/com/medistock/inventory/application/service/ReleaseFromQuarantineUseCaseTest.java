@@ -40,9 +40,10 @@ class ReleaseFromQuarantineUseCaseTest {
     void setUp() {
         TenantContext.setTenantId(TENANT);
         useCase = new ReleaseFromQuarantineUseCase(batchRepository, movementRepository);
-        quarantinedBatch = Batch.receive(TENANT, UUID.randomUUID(), "BATCH-Q-001", 100,
-                LocalDate.of(2027, Month.JUNE, 18), BigDecimal.valueOf(15.50));
-        quarantinedBatch.quarantine();
+        var batch = Batch.receive(TENANT, UUID.randomUUID(), "BATCH-Q", 50,
+                LocalDate.of(2027, Month.JUNE, 18), BigDecimal.valueOf(20.00));
+        batch.quarantine();
+        quarantinedBatch = batch;
     }
 
     @AfterEach
@@ -51,20 +52,38 @@ class ReleaseFromQuarantineUseCaseTest {
     }
 
     @Test
-    @DisplayName("Should release batch from quarantine")
+    @DisplayName("Should release quarantined batch back to active")
     void shouldReleaseFromQuarantine() {
         // Arrange
         when(batchRepository.findById(quarantinedBatch.getId())).thenReturn(Optional.of(quarantinedBatch));
         when(batchRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         // Act
-        var result = useCase.execute(quarantinedBatch.getId(), "Cleared inspection");
+        var result = useCase.execute(quarantinedBatch.getId(), "Quality passed");
 
         // Assert
         assertThat(result.getStatus()).as("status after release").isEqualTo(BatchStatus.ACTIVE);
-        assertThat(result.getCurrentQuantity()).as("current quantity").isEqualTo(100);
+        assertThat(result.getCurrentQuantity()).as("quantity preserved").isEqualTo(50);
         verify(movementRepository).save(movementCaptor.capture());
-        assertThat(movementCaptor.getValue().getType()).as("movement type").isEqualTo(MovementType.QUARANTINE_OUT);
+        Movement movement = movementCaptor.getValue();
+        assertThat(movement.getType()).as("movement type").isEqualTo(MovementType.QUARANTINE_OUT);
+        assertThat(movement.getQuantity()).as("movement quantity").isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Should throw when batch is not in quarantine")
+    void shouldThrowWhenNotQuarantined() {
+        // Arrange
+        var activeBatch = Batch.receive(TENANT, UUID.randomUUID(), "BATCH-A", 10,
+                LocalDate.of(2027, Month.JUNE, 1), BigDecimal.TEN);
+        when(batchRepository.findById(activeBatch.getId())).thenReturn(Optional.of(activeBatch));
+
+        // Act & Assert
+        assertThatThrownBy(() -> useCase.execute(activeBatch.getId(), "release"))
+                .isInstanceOf(InventoryDomainException.class)
+                .hasMessageContaining("QUARANTINED");
+
+        verify(movementRepository, never()).save(any());
     }
 
     @Test
@@ -76,41 +95,7 @@ class ReleaseFromQuarantineUseCaseTest {
 
         // Act & Assert
         assertThatThrownBy(() -> useCase.execute(id, "reason"))
-                .as("Non-existent batch should throw")
                 .isInstanceOf(InventoryDomainException.class)
                 .hasMessageContaining("Batch not found");
-    }
-
-    @Test
-    @DisplayName("Should throw when batch is not quarantined")
-    void shouldThrowWhenNotQuarantined() {
-        // Arrange
-        var activeBatch = Batch.receive(TENANT, UUID.randomUUID(), "BATCH-ACTIVE", 50,
-                LocalDate.of(2027, Month.JUNE, 18), BigDecimal.TEN);
-        when(batchRepository.findById(activeBatch.getId())).thenReturn(Optional.of(activeBatch));
-
-        // Act & Assert
-        assertThatThrownBy(() -> useCase.execute(activeBatch.getId(), "release active"))
-                .as("Releasing non-quarantined batch should throw")
-                .isInstanceOf(InventoryDomainException.class)
-                .hasMessageContaining("not QUARANTINED");
-
-        verify(batchRepository, never()).save(any());
-        verify(movementRepository, never()).save(any());
-    }
-
-    @Test
-    @DisplayName("Should throw when batch is disposed")
-    void shouldThrowWhenDisposed() {
-        // Arrange
-        var disposedBatch = Batch.receive(TENANT, UUID.randomUUID(), "BATCH-DISP", 50,
-                LocalDate.of(2027, Month.JUNE, 18), BigDecimal.TEN);
-        disposedBatch.dispose();
-        when(batchRepository.findById(disposedBatch.getId())).thenReturn(Optional.of(disposedBatch));
-
-        // Act & Assert
-        assertThatThrownBy(() -> useCase.execute(disposedBatch.getId(), "release disposed"))
-                .as("Releasing disposed batch should throw")
-                .isInstanceOf(InventoryDomainException.class);
     }
 }

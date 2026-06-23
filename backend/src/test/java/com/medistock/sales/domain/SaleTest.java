@@ -187,4 +187,101 @@ class SaleTest {
                 () -> new BatchAllocation(UUID.randomUUID(), "LOT", LocalDate.now(), -1, BigDecimal.ONE),
                 "Negative allocated quantity should throw IllegalArgumentException");
     }
+
+    // ─── Multi-item sale lifecycle ──────────────────────────────────
+
+    @Test
+    @DisplayName("Should calculate correct total for multi-item sale")
+    void shouldCalculateCorrectTotalForMultiItemSale() {
+        // Arrange
+        UUID prodA = UUID.randomUUID();
+        UUID prodB = UUID.randomUUID();
+        BatchAllocation alloc1 = new BatchAllocation(UUID.randomUUID(), "LOT-A",
+                LocalDate.of(2027, Month.JUNE, 1), 5, BigDecimal.valueOf(5.00));
+        BatchAllocation alloc2 = new BatchAllocation(UUID.randomUUID(), "LOT-B",
+                LocalDate.of(2027, Month.JULY, 1), 3, BigDecimal.valueOf(6.00));
+        SaleItem item1 = new SaleItem(prodA, "Product A", "SKU-A", 5,
+                BigDecimal.valueOf(20.00), List.of(alloc1));
+        SaleItem item2 = new SaleItem(prodB, "Product B", "SKU-B", 3,
+                BigDecimal.valueOf(10.00), List.of(alloc2));
+
+        // Act
+        Sale sale = Sale.create("tenant-1", "user-1", List.of(item1, item2));
+
+        // Assert
+        // item1 total = 5 * 20.00 = 100.00
+        // item2 total = 3 * 10.00 = 30.00
+        // grand total = 130.00
+        assertEquals(0, BigDecimal.valueOf(130.00).compareTo(sale.getSubtotal()),
+                "subtotal should be 130.00");
+        assertEquals(0, BigDecimal.valueOf(130.00).compareTo(sale.getTotal()),
+                "total should be 130.00");
+        assertEquals(2, sale.getItemCount(), "item count");
+    }
+
+    @Test
+    @DisplayName("Should throw when creating sale with blank tenant")
+    void shouldThrowWhenCreatingSaleWithBlankTenant() {
+        // Act & Assert
+        assertThrows(SaleDomainException.class,
+                () -> Sale.create("", "user-1", List.of(sampleItem())),
+                "Blank tenant should throw SaleDomainException");
+    }
+
+    @Test
+    @DisplayName("Should throw when creating sale with blank performedBy")
+    void shouldThrowWhenCreatingSaleWithBlankPerformedBy() {
+        // Act & Assert
+        assertThrows(SaleDomainException.class,
+                () -> Sale.create("tenant-1", "", List.of(sampleItem())),
+                "Blank performedBy should throw SaleDomainException");
+    }
+
+    @Test
+    @DisplayName("Should throw when creating sale with null saleDate")
+    void shouldThrowWhenCreatingSaleWithNullDate() {
+        // Act & Assert
+        assertThrows(SaleDomainException.class,
+                () -> Sale.create("tenant-1", "user-1", List.of(sampleItem()), null),
+                "Null sale date should throw SaleDomainException");
+    }
+
+    // ─── Edge case tests ────────────────────────────────────────────
+
+    @Test
+    @DisplayName("Should throw when item price is negative")
+    void shouldRejectNegativeUnitPrice() {
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class,
+                () -> new SaleItem(PRODUCT_ID, "Test", "TST", 5,
+                        BigDecimal.valueOf(-1), List.of(sampleAllocation())),
+                "Negative unit price should throw IllegalArgumentException");
+    }
+
+    @Test
+    @DisplayName("Should throw when batch allocation lot number is blank")
+    void shouldRejectBlankLotNumber() {
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class,
+                () -> new BatchAllocation(UUID.randomUUID(), "", LocalDate.now(), 10, BigDecimal.ONE),
+                "Blank lot number should throw IllegalArgumentException");
+    }
+
+    @Test
+    @DisplayName("Should throw when batch allocation expiration is null")
+    void shouldRejectNullBatchAllocationExpiration() {
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class,
+                () -> new BatchAllocation(UUID.randomUUID(), "LOT", null, 10, BigDecimal.ONE),
+                "Null expiration date should throw IllegalArgumentException");
+    }
+
+    @Test
+    @DisplayName("Should throw when batch allocation cost is negative")
+    void shouldRejectNegativeBatchAllocationCost() {
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class,
+                () -> new BatchAllocation(UUID.randomUUID(), "LOT", LocalDate.now(), 10, BigDecimal.valueOf(-1)),
+                "Negative cost should throw IllegalArgumentException");
+    }
 }

@@ -69,16 +69,7 @@ public class ControlledStockAlertEvaluator implements AlertRuleEvaluator {
 
         // Close stale controlled stock alerts
         try {
-            List<AlertInstance> allActive = alertInstanceRepository
-                    .findByStatus(tenantId, AlertInstanceStatus.ACTIVE);
-            for (AlertInstance alert : allActive) {
-                if (alert.getAlertRuleId().equals(rule.getId())
-                        && alert.getProductId() != null
-                        && !triggeringProductIds.contains(alert.getProductId())) {
-                    alert.resolve();
-                    alertInstanceRepository.save(alert);
-                }
-            }
+            StaleAlertCleanup.resolveStaleAlerts(alertInstanceRepository, rule, triggeringProductIds, tenantId);
         } catch (Exception e) {
             log.warn("Could not close stale alerts for controlled stock rule: {}", e.getMessage());
         }

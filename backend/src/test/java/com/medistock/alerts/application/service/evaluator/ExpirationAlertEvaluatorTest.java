@@ -188,4 +188,41 @@ class ExpirationAlertEvaluatorTest {
         assertThatCode(() -> evaluator.evaluate(TENANT, expirationRule))
                 .doesNotThrowAnyException();
     }
+
+    @Test
+    void shouldNotCreateAlertWhenProductExpiresIn31Days() {
+        // Arrange: rule has expirationDays = 30, product expires in 31 days
+        var product31 = Product.register(TENANT, "Safe Product", "Tablet",
+                LocalDate.now().plusDays(31), MFR_DATE);
+
+        when(productRepository.findByTenantId(TENANT)).thenReturn(List.of(product31));
+        when(batchRepository.findAllByTenantId(TENANT)).thenReturn(List.of());
+        when(alertInstanceRepository.findByStatus(TENANT, AlertInstanceStatus.ACTIVE)).thenReturn(List.of());
+
+        // Act
+        List<AlertTriggeredEvent> events = evaluator.evaluate(TENANT, expirationRule);
+
+        // Assert
+        assertThat(events).isEmpty();
+        verify(alertInstanceRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldCreateAlertWhenProductExpiresInExactly30Days() {
+        // Arrange: rule has expirationDays = 30, product expires in exactly 30 days
+        var product30 = Product.register(TENANT, "Borderline Product", "Tablet",
+                LocalDate.now().plusDays(30), MFR_DATE);
+
+        when(productRepository.findByTenantId(TENANT)).thenReturn(List.of(product30));
+        when(batchRepository.findAllByTenantId(TENANT)).thenReturn(List.of());
+        when(alertInstanceRepository.existsActiveForRuleAndProduct(any(), any())).thenReturn(false);
+        when(alertInstanceRepository.findByStatus(TENANT, AlertInstanceStatus.ACTIVE)).thenReturn(List.of());
+        when(alertInstanceRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        // Act
+        List<AlertTriggeredEvent> events = evaluator.evaluate(TENANT, expirationRule);
+
+        // Assert
+        assertThat(events).isNotEmpty();
+    }
 }

@@ -23,6 +23,14 @@ import java.util.UUID;
 @RequestMapping("/api/v1/sales")
 public class SaleController {
 
+    private static final String DEFAULT_TENANT = "default";
+
+    private static String resolveTenantId(String tenantId) {
+        if (tenantId != null) return tenantId;
+        String fromContext = TenantContext.getTenantId();
+        return fromContext != null ? fromContext : DEFAULT_TENANT;
+    }
+
     private final CreateSaleUseCase createSaleUseCase;
     private final VoidSaleUseCase voidSaleUseCase;
     private final SaleRepository saleRepository;
@@ -40,8 +48,7 @@ public class SaleController {
             @Valid @RequestBody CreateSaleRequest request,
             @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId,
             @RequestHeader(value = "X-User-Id", required = false) String userId) {
-        if (tenantId == null) tenantId = TenantContext.getTenantId();
-        if (tenantId == null) tenantId = "default";
+        tenantId = resolveTenantId(tenantId);
         if (userId == null) userId = "admin-user";
 
         List<CreateSaleCommand.CreateSaleItem> items = request.items().stream()
@@ -69,7 +76,7 @@ public class SaleController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt:desc") String sort,
             @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
-        if (tenantId == null) tenantId = TenantContext.getTenantId();
+        tenantId = resolveTenantId(tenantId);
 
         List<Sale> sales = tenantId != null
                 ? saleRepository.findByTenantWithFilters(

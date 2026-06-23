@@ -42,23 +42,23 @@ public class Product implements AggregateRoot {
         this.isActive = true;
     }
 
-    public static Product register(String tenantId, String name, String unit,
-                                    LocalDate expirationDate, LocalDate manufacturingDate) {
-        if (tenantId == null || tenantId.isBlank()) {
+    private static void validateProductParams(String tenantId, String name, String unit,
+                                               LocalDate expirationDate, LocalDate manufacturingDate) {
+        if (tenantId == null || tenantId.isBlank())
             throw new ProductDomainException("tenantId must not be blank");
-        }
-        if (name == null || name.isBlank()) {
+        if (name == null || name.isBlank())
             throw new ProductDomainException("Product name must not be blank");
-        }
-        if (unit == null || unit.isBlank()) {
+        if (unit == null || unit.isBlank())
             throw new ProductDomainException("Unit must not be blank");
-        }
-        if (expirationDate == null) {
+        if (expirationDate == null)
             throw new ProductDomainException("Expiration date must not be null");
-        }
-        if (manufacturingDate == null) {
+        if (manufacturingDate == null)
             throw new ProductDomainException("Manufacturing date must not be null");
-        }
+    }
+
+    public static Product register(String tenantId, String name, String unit,
+                                     LocalDate expirationDate, LocalDate manufacturingDate) {
+        validateProductParams(tenantId, name, unit, expirationDate, manufacturingDate);
         return new Product(UUID.randomUUID(), tenantId, name.trim(), unit.trim(), null, expirationDate, manufacturingDate);
     }
 
@@ -67,25 +67,11 @@ public class Product implements AggregateRoot {
      * Unlike {@link #register(String, String, String)}, this does NOT generate a new UUID.
      */
     public static Product reconstitute(UUID id, String tenantId, String name, String unit, String imageUrl,
-                                        LocalDate expirationDate, LocalDate manufacturingDate) {
+                                         LocalDate expirationDate, LocalDate manufacturingDate) {
         if (id == null) {
             throw new ProductDomainException("id must not be null");
         }
-        if (tenantId == null || tenantId.isBlank()) {
-            throw new ProductDomainException("tenantId must not be blank");
-        }
-        if (name == null || name.isBlank()) {
-            throw new ProductDomainException("Product name must not be blank");
-        }
-        if (unit == null || unit.isBlank()) {
-            throw new ProductDomainException("Unit must not be blank");
-        }
-        if (expirationDate == null) {
-            throw new ProductDomainException("Expiration date must not be null");
-        }
-        if (manufacturingDate == null) {
-            throw new ProductDomainException("Manufacturing date must not be null");
-        }
+        validateProductParams(tenantId, name, unit, expirationDate, manufacturingDate);
         return new Product(id, tenantId, name.trim(), unit.trim(), imageUrl, expirationDate, manufacturingDate);
     }
 

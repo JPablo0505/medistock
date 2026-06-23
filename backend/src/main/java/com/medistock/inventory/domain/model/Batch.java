@@ -66,26 +66,31 @@ public class Batch implements AggregateRoot {
     public static Batch receive(String tenantId, UUID productId, String batchCode,
                                  int quantity, LocalDate expirationDate,
                                  BigDecimal costPerUnit) {
-        if (tenantId == null || tenantId.isBlank()) {
-            throw new InventoryDomainException("tenantId must not be blank");
-        }
-        if (productId == null) {
-            throw new InventoryDomainException("productId must not be null");
-        }
-        if (batchCode == null || batchCode.isBlank()) {
-            throw new InventoryDomainException("batchCode must not be blank");
-        }
-        if (quantity <= 0) {
-            throw new InventoryDomainException("quantity must be positive");
-        }
-        if (expirationDate == null) {
-            throw new InventoryDomainException("expirationDate must not be null");
-        }
-        if (costPerUnit == null || costPerUnit.compareTo(BigDecimal.ZERO) < 0) {
-            throw new InventoryDomainException("costPerUnit must not be null or negative");
-        }
+        validateReceiveParams(tenantId, productId, batchCode, quantity, expirationDate, costPerUnit);
         return new Batch(UUID.randomUUID(), tenantId, productId, batchCode.trim(),
                 quantity, expirationDate, costPerUnit);
+    }
+
+    private static void validateReceiveParams(String tenantId, UUID productId, String batchCode,
+                                                int quantity, LocalDate expirationDate, BigDecimal costPerUnit) {
+        if (tenantId == null || tenantId.isBlank())
+            throw new InventoryDomainException("tenantId must not be blank");
+        if (productId == null)
+            throw new InventoryDomainException("productId must not be null");
+        if (batchCode == null || batchCode.isBlank())
+            throw new InventoryDomainException("batchCode must not be blank");
+        if (quantity <= 0)
+            throw new InventoryDomainException("quantity must be positive");
+        if (expirationDate == null)
+            throw new InventoryDomainException("expirationDate must not be null");
+        if (costPerUnit == null || costPerUnit.compareTo(BigDecimal.ZERO) < 0)
+            throw new InventoryDomainException("costPerUnit must not be null or negative");
+    }
+
+    private void validateNotDisposed() {
+        if (status == BatchStatus.DISPOSED) {
+            throw new InventoryDomainException("Cannot operate on a DISPOSED batch");
+        }
     }
 
     /**
@@ -127,9 +132,7 @@ public class Batch implements AggregateRoot {
      * Place batch under quarantine.
      */
     public void quarantine() {
-        if (status == BatchStatus.DISPOSED) {
-            throw new InventoryDomainException("Cannot quarantine a DISPOSED batch");
-        }
+        validateNotDisposed();
         if (status == BatchStatus.QUARANTINED) {
             throw new InventoryDomainException("Batch is already QUARANTINED");
         }
@@ -150,9 +153,7 @@ public class Batch implements AggregateRoot {
      * Dispose / write off the entire batch.
      */
     public void dispose() {
-        if (status == BatchStatus.DISPOSED) {
-            throw new InventoryDomainException("Batch is already DISPOSED");
-        }
+        validateNotDisposed();
         if (status == BatchStatus.EXPIRED) {
             throw new InventoryDomainException("Batch is already EXPIRED — mark as disposed instead");
         }
@@ -164,9 +165,7 @@ public class Batch implements AggregateRoot {
      * Mark batch as expired.
      */
     public void markExpired() {
-        if (status == BatchStatus.DISPOSED) {
-            throw new InventoryDomainException("Cannot expire a DISPOSED batch");
-        }
+        validateNotDisposed();
         this.status = BatchStatus.EXPIRED;
     }
 
@@ -179,9 +178,7 @@ public class Batch implements AggregateRoot {
         if (quantity <= 0) {
             throw new InventoryDomainException("Restore quantity must be positive");
         }
-        if (status == BatchStatus.DISPOSED) {
-            throw new InventoryDomainException("Cannot restore quantity to a DISPOSED batch");
-        }
+        validateNotDisposed();
         this.currentQuantity += quantity;
         if (status == BatchStatus.DEPLETED && currentQuantity > 0) {
             this.status = BatchStatus.ACTIVE;

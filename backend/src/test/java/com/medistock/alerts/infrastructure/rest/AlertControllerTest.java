@@ -273,4 +273,107 @@ class AlertControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string("1"));
     }
+
+    // ─── Create / Update / Toggle / Delete ──────────────────────────
+
+    @Test
+    @DisplayName("POST /api/v1/alerts/rules — should create alert rule")
+    void shouldCreateRule() throws Exception {
+        // Arrange
+        when(createAlertRuleUseCase.execute(anyString(), anyString(), anyString(),
+                anyString(), anyMap())).thenReturn(sampleRule);
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/alerts/rules")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Tenant-Id", "test-tenant")
+                        .content("""
+                                {
+                                    "name": "Test Rule",
+                                    "description": "Desc",
+                                    "type": "EXPIRATION",
+                                    "config": {"expirationDays": 30}
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(header().exists("Location"))
+                .andExpect(jsonPath("$.name").value("Test Rule"));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/alerts/rules — should use default tenant when header missing")
+    void shouldCreateRuleWithDefaultTenant() throws Exception {
+        // Arrange
+        TenantContext.clear();
+        when(createAlertRuleUseCase.execute(eq("default"), anyString(), anyString(),
+                anyString(), anyMap())).thenReturn(sampleRule);
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/alerts/rules")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "Rule",
+                                    "description": "D",
+                                    "type": "EXPIRATION",
+                                    "config": {}
+                                }
+                                """))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    @DisplayName("PUT /api/v1/alerts/rules/{id} — should update alert rule")
+    void shouldUpdateRule() throws Exception {
+        // Arrange
+        when(updateAlertRuleUseCase.execute(any(), anyString(), anyString(),
+                anyString(), anyMap())).thenReturn(sampleRule);
+
+        // Act & Assert
+        mockMvc.perform(put("/api/v1/alerts/rules/{id}", ruleId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "name": "Updated Rule",
+                                    "description": "Updated",
+                                    "type": "LOW_STOCK",
+                                    "config": {"threshold": 10}
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Test Rule"));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/alerts/rules/{id}/toggle — should toggle rule active state")
+    void shouldToggleRule() throws Exception {
+        // Arrange
+        when(alertRuleRepository.findById(ruleId))
+                .thenReturn(Optional.of(sampleRule));
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/alerts/rules/{id}/toggle", ruleId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Test Rule"));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/alerts/rules/{id}/toggle — should return 404 when rule not found")
+    void shouldToggleRuleNotFound() throws Exception {
+        // Arrange
+        when(alertRuleRepository.findById(ruleId))
+                .thenReturn(Optional.empty());
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/alerts/rules/{id}/toggle", ruleId))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("DELETE /api/v1/alerts/rules/{id} — should delete rule")
+    void shouldDeleteRule() throws Exception {
+        // Act & Assert
+        mockMvc.perform(delete("/api/v1/alerts/rules/{id}", ruleId))
+                .andExpect(status().isNoContent());
+    }
 }

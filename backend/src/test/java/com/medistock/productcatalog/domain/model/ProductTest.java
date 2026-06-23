@@ -212,4 +212,154 @@ class ProductTest {
         assertInstanceOf(AggregateRoot.class, product,
                 "Product should implement AggregateRoot");
     }
+
+    // ─── Reconstitute ───────────────────────────────────────────────
+
+    @Test
+    @DisplayName("Should reconstitute product with exact ID")
+    void shouldReconstituteProduct() {
+        // Arrange
+        UUID id = UUID.randomUUID();
+
+        // Act
+        Product product = Product.reconstitute(id, "tenant-1", "Paracetamol 500mg",
+                "Tablet", null, EXP, MFR);
+
+        // Assert
+        assertEquals(id, product.getId(), "exact id should be preserved");
+        assertEquals("Paracetamol 500mg", product.getName(), "name");
+        assertEquals("Tablet", product.getUnit(), "unit");
+        assertTrue(product.isActive(), "active flag");
+    }
+
+    @Test
+    @DisplayName("Should reject reconstitute with null id")
+    void shouldRejectReconstituteWithNullId() {
+        // Act & Assert
+        assertThrows(ProductDomainException.class,
+                () -> Product.reconstitute(null, "tenant-1", "Test", "unit", null, EXP, MFR),
+                "Null id should throw ProductDomainException");
+    }
+
+    @Test
+    @DisplayName("Should reject reconstitute with blank tenant")
+    void shouldRejectReconstituteWithBlankTenant() {
+        // Act & Assert
+        assertThrows(ProductDomainException.class,
+                () -> Product.reconstitute(UUID.randomUUID(), "", "Test", "unit", null, EXP, MFR),
+                "Blank tenant should throw ProductDomainException");
+    }
+
+    @Test
+    @DisplayName("Should reject reconstitute with blank name")
+    void shouldRejectReconstituteWithBlankName() {
+        // Act & Assert
+        assertThrows(ProductDomainException.class,
+                () -> Product.reconstitute(UUID.randomUUID(), "tenant-1", "  ", "unit", null, EXP, MFR),
+                "Blank name should throw ProductDomainException");
+    }
+
+    @Test
+    @DisplayName("Should reject reconstitute with blank unit")
+    void shouldRejectReconstituteWithBlankUnit() {
+        // Act & Assert
+        assertThrows(ProductDomainException.class,
+                () -> Product.reconstitute(UUID.randomUUID(), "tenant-1", "Test", "  ", null, EXP, MFR),
+                "Blank unit should throw ProductDomainException");
+    }
+
+    @Test
+    @DisplayName("Should reject reconstitute with null expiration date")
+    void shouldRejectReconstituteWithNullExpiration() {
+        // Act & Assert
+        assertThrows(ProductDomainException.class,
+                () -> Product.reconstitute(UUID.randomUUID(), "tenant-1", "Test", "unit", null, null, MFR),
+                "Null expiration date should throw ProductDomainException");
+    }
+
+    @Test
+    @DisplayName("Should reject reconstitute with null manufacturing date")
+    void shouldRejectReconstituteWithNullManufacturing() {
+        // Act & Assert
+        assertThrows(ProductDomainException.class,
+                () -> Product.reconstitute(UUID.randomUUID(), "tenant-1", "Test", "unit", null, EXP, null),
+                "Null manufacturing date should throw ProductDomainException");
+    }
+
+    // ─── Sale price and purchase price ──────────────────────────────
+
+    @Test
+    @DisplayName("Should set sale price and purchase price on update")
+    void shouldSetPricesOnUpdate() {
+        // Arrange
+        Product product = registerDefault();
+
+        // Act
+        product.update("Ibuprofeno 600mg", null, null, null, null, null,
+                false, false, null, "Tablet",
+                BigDecimal.valueOf(100), BigDecimal.valueOf(60),
+                null, EXP, MFR);
+
+        // Assert
+        assertEquals(0, BigDecimal.valueOf(100).compareTo(product.getSalePrice().amount()), "sale price");
+        assertEquals(0, BigDecimal.valueOf(60).compareTo(product.getPurchasePrice().amount()), "purchase price");
+    }
+
+    @Test
+    @DisplayName("Should default to zero prices when null is provided")
+    void shouldDefaultZeroPricesWhenNull() {
+        // Arrange
+        Product product = registerDefault();
+
+        // Act
+        product.update("Ibuprofeno 600mg", null, null, null, null, null,
+                false, false, null, "Tablet",
+                null, null, null, EXP, MFR);
+
+        // Assert
+        assertEquals(0, BigDecimal.ZERO.compareTo(product.getSalePrice().amount()), "sale price default");
+        assertEquals(0, BigDecimal.ZERO.compareTo(product.getPurchasePrice().amount()), "purchase price default");
+    }
+
+    @Test
+    @DisplayName("Should reject update with blank unit")
+    void shouldRejectUpdateWithBlankUnit() {
+        // Arrange
+        Product product = registerDefault();
+
+        // Act & Assert
+        assertThrows(ProductDomainException.class,
+                () -> product.update("Ibuprofeno", null, null, null, null, null,
+                        false, false, null, "  ",
+                        BigDecimal.TEN, BigDecimal.ZERO, null, EXP, MFR),
+                "Blank unit should throw ProductDomainException");
+    }
+
+    @Test
+    @DisplayName("Should reject update with null expiration date")
+    void shouldRejectUpdateWithNullExpirationDate() {
+        // Arrange
+        Product product = registerDefault();
+
+        // Act & Assert
+        assertThrows(ProductDomainException.class,
+                () -> product.update("Ibuprofeno", null, null, null, null, null,
+                        false, false, null, "Tablet",
+                        BigDecimal.TEN, BigDecimal.ZERO, null, null, MFR),
+                "Null expiration date should throw ProductDomainException");
+    }
+
+    @Test
+    @DisplayName("Should reject update with null manufacturing date")
+    void shouldRejectUpdateWithNullManufacturingDate() {
+        // Arrange
+        Product product = registerDefault();
+
+        // Act & Assert
+        assertThrows(ProductDomainException.class,
+                () -> product.update("Ibuprofeno", null, null, null, null, null,
+                        false, false, null, "Tablet",
+                        BigDecimal.TEN, BigDecimal.ZERO, null, EXP, null),
+                "Null manufacturing date should throw ProductDomainException");
+    }
 }

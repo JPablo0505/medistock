@@ -18,6 +18,13 @@ public class DashboardController {
 
     private static final String STATUS_ACTIVE = "ACTIVE";
 
+    private static final String DEFAULT_TENANT = "default";
+
+    private static String resolveTenantId() {
+        String tenantId = TenantContext.getTenantId();
+        return tenantId != null ? tenantId : DEFAULT_TENANT;
+    }
+
     private final SpringDataJpaProductRepository productRepo;
     private final SpringDataJpaBatchRepository batchRepo;
     private final SpringDataJpaAlertInstanceRepository alertRepo;
@@ -32,8 +39,7 @@ public class DashboardController {
 
     @GetMapping("/summary")
     public ResponseEntity<DashboardSummary> summary() {
-        String tenantId = TenantContext.getTenantId();
-        if (tenantId == null) tenantId = "default";
+        String tenantId = resolveTenantId();
 
         long totalProducts = productRepo.countByTenantId(tenantId);
         long activeProducts = productRepo.countByTenantIdAndIsActive(tenantId, true);

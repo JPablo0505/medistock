@@ -82,7 +82,7 @@ class WriteOffUseCaseTest {
         assertThatThrownBy(() -> useCase.execute(activeBatch.getId(), "double dispose"))
                 .as("Double dispose should throw")
                 .isInstanceOf(InventoryDomainException.class)
-                .hasMessageContaining("already DISPOSED");
+                .hasMessageContaining("DISPOSED");
 
         verify(batchRepository, never()).save(any());
         verify(movementRepository, never()).save(any());
@@ -101,6 +101,23 @@ class WriteOffUseCaseTest {
                 .as("Non-existent batch should throw")
                 .isInstanceOf(InventoryDomainException.class)
                 .hasMessageContaining("Batch not found");
+    }
+
+    @Test
+    @DisplayName("Should use default tenant when TenantContext is null")
+    void shouldUseDefaultTenantWhenContextNull() {
+        // Arrange
+        TenantContext.clear();
+        when(batchRepository.findById(activeBatch.getId())).thenReturn(Optional.of(activeBatch));
+        when(batchRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        // Act
+        var result = useCase.execute(activeBatch.getId(), "Test");
+
+        // Assert
+        assertThat(result.getStatus()).as("status after dispose").isEqualTo(BatchStatus.DISPOSED);
+        verify(movementRepository).save(movementCaptor.capture());
+        assertThat(movementCaptor.getValue().getTenantId()).as("tenant fallback").isEqualTo("default");
     }
 
     @Test

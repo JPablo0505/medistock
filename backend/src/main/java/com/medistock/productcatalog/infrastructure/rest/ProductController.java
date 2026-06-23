@@ -20,6 +20,13 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/v1/products")
 public class ProductController {
 
+    private static final String DEFAULT_TENANT = "default";
+
+    private static String resolveTenantId() {
+        String tenantId = TenantContext.getTenantId();
+        return tenantId != null ? tenantId : DEFAULT_TENANT;
+    }
+
     private final RegisterProductUseCase registerUseCase;
     private final UpdateProductUseCase updateUseCase;
     private final DeactivateProductUseCase deactivateUseCase;
@@ -43,8 +50,7 @@ public class ProductController {
 
     @PostMapping
     public ResponseEntity<ProductDTO> create(@Valid @RequestBody CreateProductRequest request) {
-        String tenantId = TenantContext.getTenantId();
-        if (tenantId == null) tenantId = "default";
+        String tenantId = resolveTenantId();
         ProductDTO result = registerUseCase.execute(tenantId, request.name(), request.unit(),
                 request.expirationDate(), request.manufacturingDate());
         // Apply full update with all fields after registration

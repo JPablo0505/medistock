@@ -101,17 +101,8 @@ public class LowStockAlertEvaluator implements AlertRuleEvaluator {
 
     private void closeStaleLowStockAlerts(AlertRule rule, Set<UUID> stillTriggering) {
         try {
-            List<AlertInstance> allActive = alertInstanceRepository
-                    .findByStatus(rule.getTenantId(), AlertInstanceStatus.ACTIVE);
-            for (AlertInstance alert : allActive) {
-                if (alert.getAlertRuleId().equals(rule.getId())
-                        && alert.getProductId() != null
-                        && !stillTriggering.contains(alert.getProductId())) {
-                    alert.resolve();
-                    alertInstanceRepository.save(alert);
-                    log.info("Resolved stale low-stock alert for product {}", alert.getProductId());
-                }
-            }
+            StaleAlertCleanup.resolveStaleAlerts(alertInstanceRepository, rule, stillTriggering, rule.getTenantId());
+            log.info("Resolved stale low-stock alerts for rule {}", rule.getId());
         } catch (Exception e) {
             log.warn("Could not close stale alerts for rule {}: {}", rule.getId(), e.getMessage());
         }
